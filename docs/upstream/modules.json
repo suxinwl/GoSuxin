@@ -1,0 +1,62 @@
+[
+  {
+    "source": "github.com/gogf/gf/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/cmd/gf/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/cmd/suxin",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/drivers/mysql/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/drivers/mysql",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/drivers/pgsql/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/drivers/pgsql",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/drivers/sqlite/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/drivers/sqlite",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/drivers/mssql/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/drivers/mssql",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/drivers/oracle/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/drivers/oracle",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/drivers/clickhouse/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/drivers/clickhouse",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/nosql/redis/v2",
+    "baseline": "2.9.3",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/nosql/redis",
+    "version": "1.0.0"
+  },
+  {
+    "source": "github.com/gogf/gf/contrib/sdk/httpclient/v2",
+    "baseline": "2.9.8",
+    "module": "github.com/suxinwl/GoSuxin/framework/contrib/sdk/httpclient",
+    "version": "1.0.0"
+  }
+]

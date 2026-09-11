@@ -1,0 +1,42 @@
+# GoSuxin V1.0.0 文档资料包
+
+![GoSuxin](images/logo.png)
+
+官网预留 https://www.suxinwl.com/docs/gosuxin/v1.0.0/ ，本次不部署官网。
+
+- [GoSuxin 开发框架](introduction.md)
+- [安装业务后台](installation.md)
+- [项目结构与模块边界](structure.md)
+- [Suxin CLI：安装与版本](cli/install.md)
+- [Suxin CLI：初始化项目](cli/init.md)
+- [Suxin CLI：开发运行](cli/run.md)
+- [Suxin CLI：编译与交叉编译](cli/build.md)
+- [Suxin CLI：控制器生成](cli/gen-ctrl.md)
+- [Suxin CLI：DAO 与数据模型生成](cli/gen-dao.md)
+- [Suxin CLI：Service 接口生成](cli/gen-service.md)
+- [快速开始](quick/index.md)
+- [下载与使用](quick/01.md)
+- [Hello World](quick/02.md)
+- [获取请求参数](quick/03.md)
+- [请求数据结构](quick/04.md)
+- [使用规范路由](quick/05.md)
+- [中间件](quick/06.md)
+- [统一返回结构](quick/07.md)
+- [接口文档](quick/08.md)
+- [下一步](quick/09.md)
+- [后端接口开发完整流程](backend/workflow.md)
+- [请求校验、登录、RBAC 与跨域](backend/auth.md)
+- [ORM、DAO 与事务](backend/database.md)
+- [扩展工具与业务复用](backend/utilities.md)
+- [系统配置与版本](backend/configuration.md)
+- [前端开发与组件](frontend/development.md)
+- [国际化、主题与品牌](frontend/i18n.md)
+- [首页与在线服务状态](frontend/home.md)
+- [文件存储与附件访问](files/storage.md)
+- [静态资源与部署路径](files/static.md)
+- [本地插件开发、打包与安装](plugins/local.md)
+- [部署、升级与排错](deployment.md)
+- [123 云盘](files/pan123.md)
+- [品牌维护记录](branding-maintenance.md)
+
+来源映射见 sources.json，章节覆盖见 coverage.md，发布验证见 validation.md。

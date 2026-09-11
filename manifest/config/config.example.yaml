@@ -1,0 +1,26 @@
+server:
+  address: :8601
+logger:
+  path: runtime/log
+  file: '{Y-m-d}.log'
+  level: all
+  timeFormat: '2006-01-02 15:04:05'
+  stdout: true
+database:
+  default:
+    host: 127.0.0.1
+    port: '3306'
+    user: root
+    pass: ''
+    name: gosuxin
+    type: mysql
+    prefix: gf_
+    debug: false
+    createdAt: createtime
+    updatedAt: updatetime
+    deletedAt: deletetime
+redis:
+  default:
+    address: 127.0.0.1:6379
+    db: 0
+    pass: ''

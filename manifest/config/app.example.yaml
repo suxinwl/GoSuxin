@@ -1,0 +1,18 @@
+app:
+  version: 1.0.0
+  runEnv: debug
+  loginCaptcha: false
+  SecretKey: CHANGE_ME_WITH_INIT_LOCAL_CONFIG
+  MaxRefresh: 600
+  TokenTimeout: 1800
+  MultiLogin: true
+  superRoleAuth: false
+  DynamicToken: admin,wxapp
+  validityApi: true
+  apisecret: suxin-public-example
+  TokenCacheKey: suxin_token_
+  EncryptKey: CHANGE_ME_WITH_INIT_LOCAL_CONFIG
+  allowurl: localhost:9600,127.0.0.1:9600,localhost:8601,127.0.0.1:8601,www.suxinwl.com
+  PrivateHouse: ''
+  vueobjroot: web
+  nodeCommand: yarn
