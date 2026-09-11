@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory,createWebHashHistory } from 'vue-router';
+import { createRouter, createWebHistory } from 'vue-router';
 import NProgress from 'nprogress'; // progress bar
 import 'nprogress/nprogress.css';
 
@@ -7,10 +7,7 @@ import { REDIRECT_MAIN, NOT_FOUND_ROUTE } from './routes/base';
 import createRouteGuard from './guard';
 NProgress.configure({ showSpinner: false }); // NProgress Configuration
 const router = createRouter({
-  //go二级目录部署，位置在resource/webadmin下
-  history: createWebHashHistory(process.env.NODE_ENV === 'production' ? '/webadmin/' : ''),//has模式带#号
-  //2独立域名部署
-  // history: createWebHistory(),//history模式
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',

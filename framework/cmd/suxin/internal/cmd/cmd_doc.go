@@ -15,7 +15,7 @@ import (
 var Doc = cDoc{}
 
 type cDoc struct {
-	g.Meta `name:"doc" brief:"online documentation hosting is pending; use docs/site-migration in the source distribution"`
+	g.Meta `name:"doc" brief:"online documentation hosting is pending; see README.MD in the source distribution and suxin --help"`
 }
 type cDocInput struct {
 	g.Meta `name:"doc" config:"suxincli.doc"`
@@ -28,5 +28,5 @@ type cDocInput struct {
 type cDocOutput struct{}
 
 func (c cDoc) Index(ctx context.Context, in cDocInput) (*cDocOutput, error) {
-	return nil, fmt.Errorf("online documentation hosting is pending; use docs/site-migration in the source distribution")
+	return nil, fmt.Errorf("online documentation hosting is pending; see README.MD in the source distribution and suxin --help")
 }

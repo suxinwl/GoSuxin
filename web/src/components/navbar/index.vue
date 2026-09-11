@@ -4,7 +4,7 @@
       <a-space>
         <img
           alt="logo"
-          :src="'./logo.png?v=suxin1'"
+          :src="brandLogo"
           style="height: 33px;overflow: hidden;"
         />
         <div class="sitetitle" v-if="appStore.device === 'desktop'">
@@ -168,6 +168,8 @@
 </template>
 
 <script lang="ts" setup>
+const brandLogo = `${import.meta.env.BASE_URL}logo.png?v=suxinweb1`;
+
   import { computed, ref, inject } from 'vue';
   import { useDark, useToggle, useFullscreen } from '@vueuse/core';
   import { useAppStore, useUserStore } from '@/store';

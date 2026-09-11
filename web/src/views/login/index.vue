@@ -3,7 +3,7 @@
        :style="isPhone?`background:#ffffff;`:`background-image: `+(theme === 'dark'?'':'url('+loginBigBg+');')">
     <div class="header-nav pc_height flex flex-middle flex-between">
       <div class="icon-left ">
-         <img style="height: 37px;" :src="'./logo.png?v=suxin1'" />
+         <img style="height: 37px;" :src="brandLogo" />
          <span class="app-title">{{ AppTitle }}</span>
       </div>
       <div class="arco-right">
@@ -31,7 +31,7 @@
               </div>
             </div>
             <div class="image-wrap">
-                <img style="width:108px;height:108px;object-fit:contain" :src="'./logo.png?v=suxin1'" alt="GoSuxin">
+                <img style="width:108px;height:108px;object-fit:contain" :src="brandLogo" alt="GoSuxin">
             </div>
           </div>
           <!--2.整张图-->
@@ -100,6 +100,8 @@
 </template>
 
 <script setup lang="ts">
+const brandLogo = `${import.meta.env.BASE_URL}logo.png?v=suxinweb1`;
+
 import { ref,computed,onMounted,onUnmounted } from 'vue';
 import AccountLogin from './components/account/index.vue'
 import PhoneLogin from './components/phone/index.vue'

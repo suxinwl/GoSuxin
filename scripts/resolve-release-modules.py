@@ -1,8 +1,9 @@
-﻿"""Resolve each release module without go.work against an isolated local proxy."""
+"""Resolve each release module without go.work against an isolated local proxy."""
 import os,subprocess,json
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-mods=json.loads((root/'docs/upstream/modules.json').read_text())
+from release_modules import MODULES
+mods = [dict(m) for m in MODULES]
 # Core first, consumers last; CLI consumes the SQL drivers.
 mods.sort(key=lambda m: 0 if m['module'].endswith('/framework') else 2 if m['module'].endswith('/cmd/suxin') else 1)
 env={**os.environ,'GOWORK':'off','GOPROXY':(root/'runtime/module-proxy').as_uri()+',https://proxy.golang.org,direct','GONOSUMDB':'github.com/suxinwl/GoSuxin*','GOMODCACHE':str(root/'runtime/final-proxy-cache')}

@@ -1,11 +1,12 @@
-﻿"""Check release version, module boundaries, installer package and documentation links."""
+"""Check release version, module boundaries, installer package and documentation links."""
 from pathlib import Path
 import json,re,zipfile,sys
 root=Path(sys.argv[1]).resolve() if len(sys.argv)>1 else Path(__file__).resolve().parents[1]
 errors=[]
 def check(ok,msg):
  if not ok:errors.append(msg)
-mods=json.loads((root/'docs/upstream/modules.json').read_text())
+from release_modules import MODULES
+mods = [dict(m) for m in MODULES]
 for m in mods+[{'module':'github.com/suxinwl/GoSuxin','version':'1.0.0'}]:
  rel=m['module'].removeprefix('github.com/suxinwl/GoSuxin').lstrip('/');s=(root/rel/'go.mod').read_text(encoding='utf-8-sig')
  check(re.search(r'^module '+re.escape(m['module'])+r'\s*$',s,re.M),'module name: '+rel)
@@ -26,13 +27,10 @@ zp=root/'devsource/developer/install/webcode.zip'
 with zipfile.ZipFile(zp) as z:
  check(not any('.git' in Path(n).parts or 'node_modules' in Path(n).parts for n in z.namelist()),'installer private directories')
  check(json.loads(z.read('webcode/package.json'))['version']=='1.0.0','installer version')
-nav=json.loads((root/'docs/site-migration/navigation.json').read_text(encoding='utf-8'))
-check(nav['version']=='1.0.0','navigation version')
-for p in nav['pages']:check((root/'docs/site-migration'/p['path']).is_file(),'missing chapter '+p['path'])
-for p in [root/'README.MD',*(root/'docs/site-migration').rglob('*.md')]:
+for p in [root/'README.MD',root/'framework/README.MD']:
  for target in re.findall(r'\]\(([^)]+)\)',p.read_text(encoding='utf-8')):
   if re.match(r'^[a-z]+:|^#',target):continue
   target=target.split('#')[0].strip('<>')
   if target:check((p.parent/target).exists(),'broken link '+str(p.relative_to(root))+': '+target)
-print(json.dumps({'version':'1.0.0','modules':len(mods)+1,'chapters':len(nav['pages']),'errors':errors},ensure_ascii=False,indent=2))
+print(json.dumps({'version':'1.0.0','modules':len(mods)+1,'errors':errors},ensure_ascii=False,indent=2))
 sys.exit(bool(errors))

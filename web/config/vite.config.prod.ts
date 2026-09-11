@@ -8,8 +8,8 @@ import configImageminPlugin from './plugin/imagemin';
 
 export default mergeConfig(
   {
-    // 1 配置二级访问目录（位置：webadmin）
-    base: process.env.NODE_ENV === 'production' ? '/webadmin/' : '',
+    // 1 配置二级访问目录（位置：suxinweb）
+    base: process.env.NODE_ENV === 'production' ? '/suxinweb/' : '',
     // 2 独立部署
     // base: '',
     mode: 'production',

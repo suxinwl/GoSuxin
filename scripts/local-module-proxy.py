@@ -1,10 +1,11 @@
-﻿"""Build an isolated file:// module proxy for validating unpublished Suxin modules.
+"""Build an isolated file:// module proxy for validating unpublished Suxin modules.
 Run from the repository root; generated artifacts stay under ignored runtime/.
 """
 import io, json, re, zipfile
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
-modules = json.loads((ROOT/'docs/upstream/modules.json').read_text())
+from release_modules import MODULES
+modules = [dict(m) for m in MODULES]
 PROXY = ROOT/'runtime/module-proxy'
 for mod in modules:
     name = mod['module']

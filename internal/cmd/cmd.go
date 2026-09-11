@@ -3,12 +3,15 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"github.com/suxinwl/GoSuxin/internal/adminweb"
 	"github.com/suxinwl/GoSuxin/internal/router"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/suxinwl/GoSuxin/framework/frame/g"
+	"github.com/suxinwl/GoSuxin/framework/net/ghttp"
 	"github.com/suxinwl/GoSuxin/framework/os/gcmd"
 	"github.com/suxinwl/GoSuxin/framework/util/gconv"
 )
@@ -21,8 +24,18 @@ var (
 		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
 			s := g.Server()
 			// 配置静态资源目录
-			s.AddStaticPath("/resource/uploads", "./resource/uploads")           //访问本地附件
-			s.AddStaticPath("/webadmin", "./resource/webadmin")                  //访问部署管理后台前端vue打包代码
+			s.AddStaticPath("/resource/uploads", "./resource/uploads") //访问本地附件
+			admin := adminweb.Handler("./resource/suxinweb")
+			serveAdmin := func(r *ghttp.Request) {
+				// The framework trims trailing slashes; the file server needs the original URL.
+				request := r.Request.Clone(r.Context())
+				if original, parseErr := url.ParseRequestURI(r.RequestURI); parseErr == nil {
+					request.URL = original
+				}
+				admin.ServeHTTP(r.Response.BufferWriter, request)
+			}
+			s.BindHandler("/suxinweb", serveAdmin)
+			s.BindHandler("/suxinweb/*path", serveAdmin)                         //访问部署管理后台前端vue打包代码
 			s.AddStaticPath("/resource/static/brand", "./resource/static/brand") // GoSuxin public brand assets
 			//安装页面
 			runEnv, _ := g.Cfg("app").Get(ctx, "app.runEnv")
