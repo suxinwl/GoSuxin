@@ -12,7 +12,7 @@ func HandlerResponse(r *ghttp.Request) {
 	r.Middleware.Next()
 
 	// There's custom buffer content, it then exits current handler.
-	if r.Response.BufferLength() > 0 {
+	if r.Response.BufferLength() > 0 || r.Response.BytesWritten() > 0 || r.Response.IsHeaderWrote() {
 		return
 	}
 

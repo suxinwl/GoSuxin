@@ -6,6 +6,7 @@ errors=[]
 def check(ok,msg):
  if not ok:errors.append(msg)
 from release_modules import MODULES
+from repack_webcode import frontend_files
 mods = [dict(m) for m in MODULES]
 for m in mods+[{'module':'github.com/suxinwl/GoSuxin','version':'1.0.0'}]:
  rel=m['module'].removeprefix('github.com/suxinwl/GoSuxin').lstrip('/');s=(root/rel/'go.mod').read_text(encoding='utf-8-sig')
@@ -27,6 +28,12 @@ zp=root/'devsource/developer/install/webcode.zip'
 with zipfile.ZipFile(zp) as z:
  check(not any('.git' in Path(n).parts or 'node_modules' in Path(n).parts for n in z.namelist()),'installer private directories')
  check(json.loads(z.read('webcode/package.json'))['version']=='1.0.0','installer version')
+ source_files={"webcode/"+p.relative_to(root/'web').as_posix():p for p in frontend_files(root/'web')}
+ archive_files={n for n in z.namelist() if not n.endswith('/')}
+ check(set(source_files)==archive_files,'installer source file list differs from web; run scripts/repack_webcode.py')
+ for name,p in source_files.items():
+  if name in archive_files:
+   check(z.read(name).replace(b'\r\n',b'\n')==p.read_bytes().replace(b'\r\n',b'\n'),'installer source mismatch: '+name)
 for p in [root/'README.MD',root/'framework/README.MD']:
  for target in re.findall(r'\]\(([^)]+)\)',p.read_text(encoding='utf-8')):
   if re.match(r'^[a-z]+:|^#',target):continue

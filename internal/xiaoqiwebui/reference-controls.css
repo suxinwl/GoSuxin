@@ -1,0 +1,137 @@
+/* Keep legacy settings and administration controls on the reference palette.
+   Scope the application tokens to the body so a saved light/system preference
+   on <html> cannot reintroduce light surfaces into the dark reference shell. */
+body.theme-4kvm {
+  color-scheme: dark;
+  --bg: var(--ref-bg, #0d0f11);
+  --panel: var(--ref-panel, #171b20);
+  --surface: var(--ref-panel-soft, #1e232a);
+  --soft: #252c35;
+  --text: var(--ref-text, #f7f7f8);
+  --muted: #aab3c0;
+  --line: #343c48;
+  --line-strong: #657186;
+  --brand: #d72868;
+  --on-brand: #ffffff;
+  --brand-text: #ff80ad;
+  --tint: #3b202d;
+  --poster: #23282f;
+  --poster-ink: #b8c1ce;
+  --danger: #ff9b9b;
+  --danger-bg: #42262b;
+  --success: #99d6af;
+  --success-bg: #213d2e;
+  --warning: #f0cd8a;
+  --warning-bg: #403525;
+  --shadow: 0 12px 40px #0006;
+}
+
+body.theme-4kvm :is(.admin-card, .admin-overview-grid > div,
+  .settings-dialog, .player-preferences, .viewer-notice, .action-popover) {
+  background-color: var(--panel);
+  color: var(--text);
+  border-color: var(--line);
+}
+
+body.theme-4kvm .admin-overview-grid > div {
+  background-color: var(--surface);
+}
+
+body.theme-4kvm :is(.settings-dialog, .player-preferences, .admin-card) :is(h2, h3) {
+  color: var(--text);
+}
+
+body.theme-4kvm :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="hidden"]),
+  select, textarea) {
+  color-scheme: dark;
+  background-color: var(--surface);
+  color: var(--text);
+  border-color: var(--line);
+  caret-color: var(--brand-text);
+}
+
+body.theme-4kvm :is(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+body.theme-4kvm :is(option, optgroup) {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+body.theme-4kvm :is(input[type="checkbox"], input[type="radio"]) {
+  color-scheme: dark;
+  accent-color: var(--brand);
+}
+
+body.theme-4kvm .preference-toggle {
+  color: var(--text);
+  border-color: var(--line);
+}
+
+body.theme-4kvm .preference-toggle input {
+  background-color: var(--soft);
+  border-color: var(--line-strong);
+}
+
+body.theme-4kvm .preference-toggle input::before {
+  background-color: #c2cad6;
+}
+
+body.theme-4kvm .preference-toggle input:checked {
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+
+body.theme-4kvm .preference-toggle input:checked::before {
+  background-color: var(--on-brand);
+}
+
+body.theme-4kvm :is(.segments button[aria-pressed="true"],
+  .library-view-switch button[aria-pressed="true"],
+  .menu-list button[aria-current="page"]) {
+  background-color: var(--tint);
+  color: var(--brand-text);
+}
+
+body.theme-4kvm .player-episode-list button.watched {
+  background-color: var(--success-bg);
+  color: var(--success);
+  border-color: transparent;
+}
+
+body.theme-4kvm :is(.player-episode-list button[aria-current="true"],
+  .ranking-tabs button[aria-selected="true"]) {
+  background-color: var(--brand);
+  color: var(--on-brand);
+  border-color: var(--brand);
+}
+
+body.theme-4kvm button.danger {
+  background-color: var(--danger-bg);
+  color: var(--danger);
+  border-color: #8b454e;
+}
+
+body.theme-4kvm :is(button, input, select, textarea):disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+body.theme-4kvm :is(button, input, select, textarea, summary, a, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand-text);
+  outline-offset: 3px;
+}
+
+body.theme-4kvm :is(input, select, textarea)[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+@media (hover: hover) {
+  body.theme-4kvm :is(.settings-dialog, .player-preferences, .admin-card) button.secondary:not(:disabled):hover {
+    background-color: var(--soft);
+    color: var(--text);
+    border-color: var(--line-strong);
+  }
+}

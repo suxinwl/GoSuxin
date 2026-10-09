@@ -41,6 +41,7 @@ export function getUserInfo() {
 
 //获取后台菜单
 export function getMenuList(params:object) {
+  if (/^\/plugins\/[a-z][a-z0-9-]*\/admin(?:\/|$)/.test(window.location.pathname)) params = { ...params, runtimeFrontend: 1 };
   return defHttp.get({ url: Api.GetMenu, params:params }, { errorMessageMode: 'notification' });
 }
 

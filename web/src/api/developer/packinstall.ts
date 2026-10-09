@@ -18,7 +18,7 @@ export function downCode(params: object,baseurl:string) {
 }
 //安装
 export function installCode(params: object) {
-    return defHttp.post({ url: Api.installCode, params:params}, { errorMessageMode: 'message' });
+    return defHttp.post({ url: Api.installCode, params:params, timeout: 180000}, { errorMessageMode: 'message' });
 }
 //卸载
 export function uninstallCode(params: object) {
@@ -45,7 +45,7 @@ export function menuTreeToJson(params: object) {
 }
 //安装本地代码包
 export function installLocalCode(  params: UploadFileParams, onUploadProgress?: (progressEvent: any) => void) {
-    return defHttp.uploadFile({url:`${DOMAIN}/developer/packinstall/installLocalCode`,onUploadProgress},params);
+    return defHttp.uploadFile({url:`${DOMAIN}/developer/packinstall/installLocalCode`,onUploadProgress,timeout:600000},params);
 }
 //上传文件到公共仓
 export function userUploadFile(

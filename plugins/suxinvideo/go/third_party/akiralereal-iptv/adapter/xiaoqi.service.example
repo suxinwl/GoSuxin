@@ -1,0 +1,23 @@
+[Unit]
+Description=Xiaoqi CMS with managed IPTV providers
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=xiaoqi
+Group=xiaoqi
+WorkingDirectory=/opt/xiaoqi
+ExecStart=/opt/xiaoqi/main
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=SUXIN_NODE=/usr/local/bin/node
+Environment=SUXIN_FFMPEG=/usr/bin/ffmpeg
+Environment=PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
+UMask=0077
+Restart=on-failure
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

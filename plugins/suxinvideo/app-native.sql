@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS sx_app_session (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,user_id INT UNSIGNED NOT NULL,
+ device_id VARCHAR(120) NOT NULL,device_name VARCHAR(120) NOT NULL DEFAULT '',
+ access_hash CHAR(64) NOT NULL,refresh_hash CHAR(64) NOT NULL,
+ access_expire BIGINT NOT NULL,refresh_expire BIGINT NOT NULL,revoked TINYINT NOT NULL DEFAULT 0,
+ created BIGINT NOT NULL,updated BIGINT NOT NULL,UNIQUE KEY access_hash(access_hash),
+ UNIQUE KEY refresh_hash(refresh_hash),KEY user_device(user_id,device_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sx_app_captcha (
+ challenge CHAR(48) NOT NULL PRIMARY KEY,answer_hash CHAR(64) NOT NULL,expire BIGINT NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sx_app_license (
+ id CHAR(48) NOT NULL PRIMARY KEY,user_id INT UNSIGNED NOT NULL,session_id BIGINT UNSIGNED NOT NULL,
+ device_id VARCHAR(120) NOT NULL,vod_id INT UNSIGNED NOT NULL,line VARCHAR(100) NOT NULL,
+ episode_key VARCHAR(200) NOT NULL,version_key VARCHAR(100) NOT NULL,quality VARCHAR(120) NOT NULL DEFAULT '',revision CHAR(64) NOT NULL,
+ expire BIGINT NOT NULL,revoked TINYINT NOT NULL DEFAULT 0,created BIGINT NOT NULL,
+ KEY device(device_id,user_id),KEY vod(vod_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS sx_app_checkout (
+ token_hash CHAR(64) NOT NULL PRIMARY KEY,user_id INT UNSIGNED NOT NULL,session_id BIGINT UNSIGNED NOT NULL,
+ order_no VARCHAR(30) NOT NULL,payload TEXT NOT NULL,expire BIGINT NOT NULL,
+ KEY order_no(order_no)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

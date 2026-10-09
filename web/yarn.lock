@@ -22,10 +22,10 @@
   dependencies:
     color "^3.1.3"
 
-"@arco-design/web-vue@^2.57.0":
-  version "2.57.0"
-  resolved "https://registry.npmmirror.com/@arco-design/web-vue/-/web-vue-2.57.0.tgz"
-  integrity sha512-R5YReC3C2sG3Jv0+YuR3B7kzkq2KdhhQNCGXD8T11xAoa0zMt6SWTP1xJQOdZcM9du+q3z6tk5mRvh4qkieRJw==
+"@arco-design/web-vue@2.58.0":
+  version "2.58.0"
+  resolved "https://registry.npmjs.org/@arco-design/web-vue/-/web-vue-2.58.0.tgz"
+  integrity sha512-b1vdPYOmjG5VAkVa7jlVwCb+WynBK+rnKN8zH3yKohpZObZbostRd3HgYNtjjZjGVU3OqR0Yy2FX7ftgF0bcOw==
   dependencies:
     "@arco-design/color" "^0.4.0"
     b-tween "^0.3.3"
@@ -1185,16 +1185,27 @@ bin-version@^3.0.0:
     execa "^1.0.0"
     find-versions "^3.0.0"
 
-bin-wrapper@^4.0.0, bin-wrapper@^4.0.1:
-  version "0.1.0"
-  resolved "https://registry.npmmirror.com/bin-wrapper-china/-/bin-wrapper-china-0.1.0.tgz"
-  integrity sha512-1UCm17WYEbgry50tup+AQN+JGVEVzoW4f8HMl899k1lvuFxWKGZXl/G2fgxQxAckRjnloO3ijLVVEsv8zescUg==
+bin-wrapper@^4.0.0:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/bin-wrapper/-/bin-wrapper-4.1.0.tgz"
+  integrity sha512-hfRmo7hWIXPkbpi0ZltboCMVrU+0ClXR/JgbCKKjlDjQf6igXa7OwdqNcFWQZPZTgiY7ZpzE3+LjjkLiTN2T7Q==
   dependencies:
     bin-check "^4.1.0"
     bin-version-check "^4.0.0"
-    binary-mirror-config "^1"
     download "^7.1.0"
-    import-lazy "^4.0.0"
+    import-lazy "^3.1.0"
+    os-filter-obj "^2.0.0"
+    pify "^4.0.1"
+
+bin-wrapper@^4.0.1:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/bin-wrapper/-/bin-wrapper-4.1.0.tgz"
+  integrity sha512-hfRmo7hWIXPkbpi0ZltboCMVrU+0ClXR/JgbCKKjlDjQf6igXa7OwdqNcFWQZPZTgiY7ZpzE3+LjjkLiTN2T7Q==
+  dependencies:
+    bin-check "^4.1.0"
+    bin-version-check "^4.0.0"
+    download "^7.1.0"
+    import-lazy "^3.1.0"
     os-filter-obj "^2.0.0"
     pify "^4.0.1"
 
@@ -1202,11 +1213,6 @@ binary-extensions@^2.0.0:
   version "2.3.0"
   resolved "https://registry.npmmirror.com/binary-extensions/-/binary-extensions-2.3.0.tgz"
   integrity sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==
-
-binary-mirror-config@^1:
-  version "1.41.0"
-  resolved "https://registry.npmmirror.com/binary-mirror-config/-/binary-mirror-config-1.41.0.tgz"
-  integrity sha512-ZiIhR1s6Sv1Fv6qCQqfPjx0Cj86BgFlhqNxZgHkQOWcxJcMbO3mj1iqsuVjowYqJqeZL8e52+IEv7IRnSX6T6w==
 
 bl@^1.0.0:
   version "1.2.3"
@@ -2013,7 +2019,7 @@ download@^6.2.2:
 
 download@^7.1.0:
   version "7.1.0"
-  resolved "https://registry.npmmirror.com/download/-/download-7.1.0.tgz"
+  resolved "https://registry.npmjs.org/download/-/download-7.1.0.tgz"
   integrity sha512-xqnBTVd/E+GxJVrX5/eUJiLYjCGPwMpdL+jGhGU57BvtcA7wwhtHVbXBeUk51kOpW3S7Jn3BQbN9Q1R1Km2qDQ==
   dependencies:
     archive-type "^4.0.0"
@@ -2391,7 +2397,7 @@ file-type@^6.1.0:
 
 file-type@^8.1.0:
   version "8.1.0"
-  resolved "https://registry.npmmirror.com/file-type/-/file-type-8.1.0.tgz"
+  resolved "https://registry.npmjs.org/file-type/-/file-type-8.1.0.tgz"
   integrity sha512-qyQ0pzAy78gVoJsmYeNgl8uH8yKhr1lVhW7JbzJmnlRi0I4R2eEDEJZVKG8agpDnLpacwNbDhLNG/LMdxHD2YQ==
 
 filename-reserved-regex@^2.0.0:
@@ -2545,7 +2551,7 @@ get-stream@^2.2.0:
 
 get-stream@^3.0.0:
   version "3.0.0"
-  resolved "https://registry.npmmirror.com/get-stream/-/get-stream-3.0.0.tgz"
+  resolved "https://registry.npmjs.org/get-stream/-/get-stream-3.0.0.tgz"
   integrity sha512-GlhdIUuVakc8SJ6kK0zAFbiGzRFzNnY4jUuEbV9UROo4Y+0Ny4fjvcZFVTeDA4odpFyOQzaw6hXukJSq/f28sQ==
 
 get-stream@^4.0.0:
@@ -2667,7 +2673,7 @@ got@^7.0.0:
 
 got@^8.3.1:
   version "8.3.2"
-  resolved "https://registry.npmmirror.com/got/-/got-8.3.2.tgz"
+  resolved "https://registry.npmjs.org/got/-/got-8.3.2.tgz"
   integrity sha512-qjUJ5U/hawxosMryILofZCkm3C84PLJS/0grRIpjAwu+Lkxxj5cxeCU25BG0/3mDSpXKTyZr8oh8wIgLaH0QCw==
   dependencies:
     "@sindresorhus/is" "^0.7.0"
@@ -2918,10 +2924,10 @@ import-fresh@^3.0.0, import-fresh@^3.3.0:
     parent-module "^1.0.0"
     resolve-from "^4.0.0"
 
-import-lazy@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.npmmirror.com/import-lazy/-/import-lazy-4.0.0.tgz"
-  integrity sha512-rKtvo6a868b5Hu3heneU+L4yEQ4jYKLtjpnPeUdK7h0yzXGmyBTypknlkCvHFBqfX9YlorEiMM6Dnq/5atfHkw==
+import-lazy@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.npmjs.org/import-lazy/-/import-lazy-3.1.0.tgz"
+  integrity sha512-8/gvXvX2JMn0F+CDlSC4l6kOmVaLOO3XLkksI7CI3Ud95KDYJuYur2b9P/PUt/i/pDAMd/DulQsNbbbmRRsDIQ==
 
 indent-string@^2.1.0:
   version "2.1.0"
@@ -3521,7 +3527,7 @@ make-dir@^1.0.0:
 
 make-dir@^1.2.0:
   version "1.3.0"
-  resolved "https://registry.npmmirror.com/make-dir/-/make-dir-1.3.0.tgz"
+  resolved "https://registry.npmjs.org/make-dir/-/make-dir-1.3.0.tgz"
   integrity sha512-2w31R7SJtieJJnQtGc7RVL2StM2vGYVfqUOvUDxH6bC6aJTxPxTF0GnIgCyu7tjockiUWAYQRbxa7vKn34s5sQ==
   dependencies:
     pify "^3.0.0"
@@ -3920,7 +3926,7 @@ p-cancelable@^0.3.0:
 
 p-cancelable@^0.4.0:
   version "0.4.1"
-  resolved "https://registry.npmmirror.com/p-cancelable/-/p-cancelable-0.4.1.tgz"
+  resolved "https://registry.npmjs.org/p-cancelable/-/p-cancelable-0.4.1.tgz"
   integrity sha512-HNa1A8LvB1kie7cERyy21VNeHb2CWJJYqyyC2o3klWFfMGlFmWv2Z7sFgZH8ZiaYL95ydToKTFVXgMV/Os0bBQ==
 
 p-event@^1.0.0:
@@ -3932,7 +3938,7 @@ p-event@^1.0.0:
 
 p-event@^2.1.0:
   version "2.3.1"
-  resolved "https://registry.npmmirror.com/p-event/-/p-event-2.3.1.tgz"
+  resolved "https://registry.npmjs.org/p-event/-/p-event-2.3.1.tgz"
   integrity sha512-NQCqOFhbpVTMX4qMe8PF8lbGtzZ+LCiN7pcNrb/413Na7+TRoe1xkKUzuWa/YEJdGQ0FvKtj35EEbDoVPO2kbA==
   dependencies:
     p-timeout "^2.0.1"
@@ -4001,7 +4007,7 @@ p-timeout@^1.1.1:
 
 p-timeout@^2.0.1:
   version "2.0.1"
-  resolved "https://registry.npmmirror.com/p-timeout/-/p-timeout-2.0.1.tgz"
+  resolved "https://registry.npmjs.org/p-timeout/-/p-timeout-2.0.1.tgz"
   integrity sha512-88em58dDVB/KzPEx1X0N3LwFfYZPyDc4B6eF38M1rk9VTZMbxXXgjugz8mmwpS9Ox4BDZ+t6t3QP5+/gazweIA==
   dependencies:
     p-finally "^1.0.0"
@@ -4172,7 +4178,7 @@ pify@^2.3.0:
 
 pify@^3.0.0:
   version "3.0.0"
-  resolved "https://registry.npmmirror.com/pify/-/pify-3.0.0.tgz"
+  resolved "https://registry.npmjs.org/pify/-/pify-3.0.0.tgz"
   integrity sha512-C3FsVNH1udSEX48gGX1xfvwTWfsYWj5U+8/uK15BGzIGrKoUpghX8hWZwa/OFnakBiiVNmBvemTJR5mcy7iPcg==
 
 pify@^4.0.1:
@@ -4240,7 +4246,7 @@ prepend-http@^1.0.1:
 
 prepend-http@^2.0.0:
   version "2.0.0"
-  resolved "https://registry.npmmirror.com/prepend-http/-/prepend-http-2.0.0.tgz"
+  resolved "https://registry.npmjs.org/prepend-http/-/prepend-http-2.0.0.tgz"
   integrity sha512-ravE6m9Atw9Z/jjttRUZ+clIXogdghyZAuWJ3qEzjT+jI/dL1ifAqhZeC5VHzQp1MSt1+jxKkFNemj/iO7tVUA==
 
 prettier@^2.7.1:
@@ -5207,7 +5213,7 @@ url-parse-lax@^1.0.0:
 
 url-parse-lax@^3.0.0:
   version "3.0.0"
-  resolved "https://registry.npmmirror.com/url-parse-lax/-/url-parse-lax-3.0.0.tgz"
+  resolved "https://registry.npmjs.org/url-parse-lax/-/url-parse-lax-3.0.0.tgz"
   integrity sha512-NjFKA0DidqPa5ciFcSrXnAltTtzz84ogy+NebPvfEgAck0+TNg4UJ4IN+fB7zRZfbgUf0syOo9MDxFkDSMuFaQ==
   dependencies:
     prepend-http "^2.0.0"

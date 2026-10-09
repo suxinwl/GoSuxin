@@ -36,6 +36,7 @@
 </template>
 
 <script setup lang="ts">
+import { redirectRuntimePluginAfterLogin } from '@/utils/runtime-plugin';
 import { ref,reactive,watch,onMounted} from 'vue';
 import { type FormInstance, Message } from '@arco-design/web-vue'
 import { useUserStore } from '@/store'
@@ -65,6 +66,7 @@ const handleLogin = async () => {
       captcha: form.captcha,
     })
     const { redirect, ...othersQuery } = router.currentRoute.value.query;
+    if (await redirectRuntimePluginAfterLogin(redirect)) return;
     var toURl=(redirect as string)
     if(toURl=="notFound"){
         toURl="home"

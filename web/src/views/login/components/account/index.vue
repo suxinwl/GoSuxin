@@ -47,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import { redirectRuntimePluginAfterLogin } from '@/utils/runtime-plugin';
 import { ref,reactive,onBeforeUnmount,onMounted} from 'vue';
 import { type FormInstance, Message } from '@arco-design/web-vue'
 import { useRouter } from 'vue-router';
@@ -127,6 +128,7 @@ const handleLogin = async () => {
       codeid: form.codeid
     })
     const { redirect, ...othersQuery } = router.currentRoute.value.query;
+    if (await redirectRuntimePluginAfterLogin(redirect)) return;
     var toURl=(redirect as string)
     if(!toURl||toURl=="notFound"||toURl=="login"){
         toURl="home"

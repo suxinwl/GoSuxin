@@ -6,6 +6,7 @@ package common
 
 import (
 	"context"
+	"github.com/suxinwl/GoSuxin/internal/plugins"
 
 	"github.com/suxinwl/GoSuxin/framework/net/ghttp"
 )
@@ -20,5 +21,6 @@ func (router *Router) BindController(ctx context.Context, group *ghttp.RouterGro
 		group.Bind(
 			NewBasetool(),
 		)
+		plugins.BindPublic(group)
 	})
 }

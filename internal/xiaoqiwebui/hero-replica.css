@@ -1,0 +1,25 @@
+/* Reference hero: the active 16:9 slide is centered and both neighbours remain visible. */
+.reference-hero{--hero-slide-width:75%;--hero-gap:10px;position:relative;isolation:isolate;padding:24px 0;background:#0d0f11;overflow:hidden}
+.reference-hero__viewport{position:relative;overflow:hidden;padding-bottom:30px}
+.reference-hero__track{position:relative;display:flex;align-items:stretch;gap:var(--hero-gap);width:100%;transition:transform 500ms ease;will-change:transform}
+.reference-hero__slide{position:relative;flex:0 0 var(--hero-slide-width);width:var(--hero-slide-width);min-width:0;aspect-ratio:16/9;max-height:640px;border-radius:8px;overflow:hidden;background:#1a1e24}
+.reference-hero__link{position:relative;display:block;width:100%;height:100%;color:#fff;text-decoration:none;overflow:hidden}
+.reference-hero__image{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.reference-hero__shade{position:absolute;inset:0;background:rgba(0,0,0,.4);transition:opacity .3s;pointer-events:none}
+.reference-hero__content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:24px;color:#fff;background:linear-gradient(90deg,rgba(0,0,0,.8),rgba(0,0,0,.4) 50%,transparent);opacity:0;transition:opacity .3s;pointer-events:none}
+.reference-hero__slide.is-active .reference-hero__shade{opacity:0}.reference-hero__slide.is-active .reference-hero__content{opacity:1}
+.reference-hero__title{max-width:512px;margin:0 0 8px;font-size:18px;font-weight:700;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.reference-hero__description{max-width:432px;margin:0 0 8px;font-size:14px;font-weight:700;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+.reference-hero__meta{max-width:432px;margin:0;color:#d1d5db;font-size:12px;line-height:1.5}
+.reference-hero__arrow{position:absolute;top:calc(50% - 15px);z-index:4;display:grid;place-items:center;width:40px;height:40px;min-height:0;padding:0;border:0;border-radius:50%;background:rgba(0,0,0,.4);color:#fff;font-family:Arial,sans-serif;font-size:30px;line-height:1;transform:translateY(-50%);transition:background .3s,transform .3s}
+.reference-hero__arrow:hover{background:rgba(0,0,0,.6);transform:translateY(-50%) scale(1.1)}.reference-hero__arrow--previous{left:10px}.reference-hero__arrow--next{right:10px}
+.reference-hero__pagination{position:absolute;bottom:30px;left:0;right:0;z-index:5;display:flex;align-items:center;justify-content:center;gap:8px;height:8px}
+.reference-hero__dot{display:block;width:8px;height:8px;min-height:0;min-width:0;margin:0;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.4);transition:width .3s,background .3s}
+.reference-hero__dot.is-active{width:24px;border-radius:4px;background:#ff4081}.reference-hero__link:focus-visible,.reference-hero__arrow:focus-visible,.reference-hero__dot:focus-visible{outline:2px solid #ff4081;outline-offset:-2px}
+.reference-hero__slide.image-unavailable .reference-hero__image{opacity:0}.reference-hero__slide.image-unavailable{background:linear-gradient(125deg,#2e353e,#12171b)}
+@media(min-width:640px){.reference-hero__title{font-size:24px;margin-bottom:12px}.reference-hero__description{font-size:18px}.reference-hero__meta{font-size:14px}}
+@media(min-width:768px){.reference-hero{--hero-gap:16px}}
+@media(min-width:1024px){.reference-hero{--hero-slide-width:73%;--hero-gap:30px}.reference-hero__content{padding:40px}.reference-hero__title{font-size:36px}.reference-hero__arrow{width:48px;height:48px}}
+@media(min-width:1440px){.reference-hero{--hero-slide-width:70%}}
+@media(max-width:639px){.reference-hero__content{padding:16px}.reference-hero__description{-webkit-line-clamp:2;font-size:12px;line-height:1.35}.reference-hero__title{font-size:18px}.reference-hero__meta{font-size:11px}.reference-hero__arrow{width:34px;height:34px;font-size:26px}}
+@media(prefers-reduced-motion:reduce){.reference-hero__track,.reference-hero__content,.reference-hero__shade,.reference-hero__dot{transition:none}}

@@ -1,0 +1,10 @@
+app:
+  name: analysis
+  title: 统计分析
+  version: 1.0.0
+  isinstall: true
+  installcover: false
+  isModTidy: false
+  commandLines: ""
+sqldb:
+  packtables: ""

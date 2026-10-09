@@ -210,6 +210,10 @@ func DecryptToken(ctx context.Context, token string) (DecryptStr, uuid string, e
 		return
 	}
 	length := len(decryptToken)
+	if length <= 32 {
+		err = errors.New("decrypt token invalid")
+		return
+	}
 	uuid = string(decryptToken[length-32:])
 	DecryptStr = string(decryptToken[:length-32])
 	return

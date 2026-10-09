@@ -9,6 +9,10 @@ import (
 
 // 用于验证token有效性工具
 func Token(r *ghttp.Request) {
+	if TrustedPluginIdentity(r) {
+		r.Middleware.Next()
+		return
+	}
 	if r.GetServeHandler().Handler.GetMetaTag("noLogin") == "1" { //忽略不需要登录验证接口
 		r.Middleware.Next()
 	} else {

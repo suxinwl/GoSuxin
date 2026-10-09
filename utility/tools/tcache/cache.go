@@ -20,14 +20,17 @@ var (
 func init() {
 	// 创建redis缓存适配器并将其设置为缓存对象。
 	confAddress, isExi := gcfg.Instance().Get(ctx, "redis.cache.address")
-	if isExi == nil {
+	if isExi == nil && confAddress != nil && !confAddress.IsEmpty() {
 		confdb, _ := gcfg.Instance().Get(ctx, "redis.cache.db")
 		redis, err := gredis.New(&gredis.Config{
 			Address: confAddress.String(),
 			Db:      confdb.Int(),
 		})
+		if err != nil {
+			return
+		}
 		_, sizerr := redis.DBSize(ctx)
-		if err == nil && sizerr == nil {
+		if sizerr == nil {
 			cache.SetAdapter(gcache.NewAdapterRedis(redis))
 		}
 	}

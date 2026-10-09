@@ -7,9 +7,10 @@ import (
 	"github.com/suxinwl/GoSuxin/internal/model/do"
 	"github.com/suxinwl/GoSuxin/utility/plugin"
 
+	"github.com/mssola/user_agent"
 	"github.com/suxinwl/GoSuxin/framework/frame/g"
 	"github.com/suxinwl/GoSuxin/framework/net/ghttp"
-	"github.com/mssola/user_agent"
+	"github.com/suxinwl/GoSuxin/framework/util/gconv"
 )
 
 // 添加登录日志
@@ -30,7 +31,9 @@ func AddloginLog(ctx context.Context, savedata g.Map) {
 		Os:       ua.OS(),
 		Status:   savedata["status"],
 		Des:      savedata["des"],
-		ErrorMsg: savedata["error_msg"],
+		ErrorMsg: gconv.String(savedata["error_msg"]),
 	}
-	dao.LoginLog.Ctx(ctx).Insert(loginData)
+	if _, err := dao.LoginLog.Ctx(ctx).Insert(loginData); err != nil {
+		g.Log().Warning(ctx, "登录记录写入失败", err)
+	}
 }

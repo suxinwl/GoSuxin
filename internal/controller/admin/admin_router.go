@@ -7,6 +7,7 @@ package admin
 import (
 	"context"
 	"github.com/suxinwl/GoSuxin/internal/extend/middleware"
+	"github.com/suxinwl/GoSuxin/internal/plugins"
 	"github.com/suxinwl/GoSuxin/internal/service"
 
 	"github.com/suxinwl/GoSuxin/framework/net/ghttp"
@@ -34,5 +35,6 @@ func (router *Router) BindController(ctx context.Context, group *ghttp.RouterGro
 			NewDatacenter(),
 			NewDeveloper(),
 		) //append
+		plugins.BindAdmin(group)
 	})
 }

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/suxinwl/GoSuxin/framework/frame/g"
 	"github.com/suxinwl/GoSuxin/framework/net/ghttp"
 	"github.com/suxinwl/GoSuxin/framework/util/gconv"
 )
@@ -14,37 +13,32 @@ const (
 	BearerPrefix = "Bearer "
 )
 
-// 获取请求中的token
-func GetRequestToken(r *ghttp.Request) (token string) {
-	// 请求头获取
-	tokenstr := r.Header.Get("Authorization")
-	if g.IsEmpty(tokenstr) {
-		return
+func decodeDynamicToken(value string) (token string, ok bool) {
+	defer func() { if recover() != nil { token, ok = "", false } }()
+	decoded, err := cryptojs.AesDecrypt(value)
+	if err != nil { return "", false }
+	parts := strings.Split(decoded, "#")
+	if len(parts) != 2 || parts[0] == "" { return "", false }
+	delta := time.Now().Unix() - gconv.Int64(parts[1])
+	if delta < 0 || delta >= 30 { return "", false }
+	return parts[0], true
+}
+
+// Configured API groups still require the short-lived encrypted wrapper.
+// Plugin bootstrap also accepts it; the plugin cookie contains the base token.
+// Credentials are deliberately not read from query parameters.
+func GetRequestToken(r *ghttp.Request) string {
+	value := strings.TrimSpace(r.Header.Get("Authorization"))
+	value = strings.TrimSpace(strings.TrimPrefix(value, BearerPrefix))
+	if value == "" { return "" }
+	group := strings.Split(strings.Trim(r.URL.Path, "/"), "/")[0]
+	required := false
+	for _, configured := range strings.Split(DynamicToken.String(), ",") {
+		if strings.TrimSpace(configured) != "" && strings.TrimSpace(configured) == group { required = true }
 	}
-	//处理动态token-30秒时效
-	if pathArr := strings.Split(r.Request.URL.Path, "/"); len(pathArr) > 0 && strings.Contains(DynamicToken.String(), pathArr[1]) {
-		tokenstrAes, err := cryptojs.AesDecrypt(tokenstr)
-		if tokenstrAesArr := strings.Split(tokenstrAes, "#"); err == nil && len(tokenstrAesArr) == 2 && (time.Now().Unix()-gconv.Int64(tokenstrAesArr[1]) < 30) { //30秒时效
-			tokenstr = tokenstrAesArr[0]
-		} else {
-			return
-		}
-	}
-	tokenArr := strings.Split(tokenstr, BearerPrefix)
-	if len(tokenstr) > 0 && len(tokenArr) >= 2 && tokenArr[0] == BearerPrefix {
-		return tokenArr[1]
-	} else if len(tokenstr) > 0 && len(tokenArr) == 1 {
-		return tokenArr[0]
-	}
-	// 参数传递token
-	if q := r.Get("token"); !q.IsEmpty() {
-		return q.String()
-	}
-	// Cookies传递token
-	if c := r.Cookie.Get("token"); !c.IsEmpty() {
-		return c.String()
-	}
-	return
+	if decoded, ok := decodeDynamicToken(value); ok { return decoded }
+	if required { return "" }
+	return value
 }
 
 // 获取jwttoken

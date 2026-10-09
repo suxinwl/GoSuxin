@@ -15,4 +15,3 @@ app:
   allowurl: localhost:9600,127.0.0.1:9600,localhost:8601,127.0.0.1:8601,www.suxinwl.com
   PrivateHouse: ''
   vueobjroot: web
-  nodeCommand: yarn

@@ -4,7 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/suxinwl/GoSuxin/internal/adminweb"
+	"github.com/suxinwl/GoSuxin/internal/extend/middleware"
+	"github.com/suxinwl/GoSuxin/internal/plugins"
 	"github.com/suxinwl/GoSuxin/internal/router"
+	"github.com/suxinwl/GoSuxin/internal/runtimeplugin"
+	"github.com/suxinwl/GoSuxin/internal/service"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -50,6 +54,16 @@ var (
 					}()
 				}
 			}
+			stopRuntime, runtimeErr := runtimeplugin.Default.Start(ctx, s, middleware.Token, middleware.Auth, service.Adminsystem().OperationLog)
+			if runtimeErr != nil {
+				return runtimeErr
+			}
+			defer stopRuntime()
+			stopPlugins, startErr := plugins.Start(ctx, s)
+			if startErr != nil {
+				return startErr
+			}
+			defer stopPlugins()
 			router.BindController(ctx, s)
 			s.Run()
 			return nil

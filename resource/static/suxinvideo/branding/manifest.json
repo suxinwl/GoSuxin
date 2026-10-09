@@ -1,0 +1,14 @@
+{
+  "source": "xiaoqilogo.png",
+  "source_sha256": "e0a568a149cf0ce8017a560bd37f9d2e9e8f8c4c9794b46491fb38649fcc27de",
+  "source_dimensions": [
+    1254,
+    1254
+  ],
+  "assets": {
+    "xiaoqi-logo.png": "e0a568a149cf0ce8017a560bd37f9d2e9e8f8c4c9794b46491fb38649fcc27de",
+    "app-icon.png": "b3908f4c008f243f267959a78d51c93f9d21619a2645381ccde44f2930c54dbc",
+    "default-avatar.png": "1b59a9aca567a1e299e33143f15d5fde3849a5eb376eae9ba3a16f854f6b4dc8",
+    "favicon.ico": "95fbbd6fc0e0a55b8eb215ac2d3dbf5532c16a7d2be4c2f55082a0a76ec49b60"
+  }
+}

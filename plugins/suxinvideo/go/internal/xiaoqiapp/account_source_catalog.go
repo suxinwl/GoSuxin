@@ -1,0 +1,50 @@
+package app
+
+var accountSourceChoices = []accountSourceChoice{
+	{ID: sourceHongguo, Name: "\u7ea2\u679c"},
+	{ID: sourceLZ, Name: "\u91cf\u5b50"},
+	{ID: sourceFF, Name: "\u975e\u51e1"},
+	{ID: sourceWJ, Name: "\u65e0\u6781"},
+	{ID: sourceBF, Name: "\u66b4\u98ce"},
+	{ID: sourceHN, Name: "\u7ea2\u725b"},
+	{ID: sourceSD, Name: "\u95ea\u7535"},
+	{ID: sourceBD, Name: "\u767e\u5ea6"},
+	{ID: sourceXL, Name: "\u8fc5\u96f7"},
+	{ID: sourceYQK, Name: "\u4e00\u8d77\u770b"},
+	{ID: sourceHuangdou, Name: "\u9ec4\u8c46"},
+	{ID: "huangguo", Name: "\u9ec4\u679c"},
+	{ID: source4KVM, Name: "4KVM"},
+}
+
+var accountSourceAliases = map[string]string{
+	"hongguo":           sourceHongguo,
+	"hongguoduanju.com": sourceHongguo,
+	"huangdou":          sourceHuangdou,
+	"tideember.cc":      sourceHuangdou,
+	"huangguo":          "huangguo",
+	"huangguoai":        "huangguo",
+	"huangguo-video":    "huangguo",
+	"lz":                sourceLZ,
+	"liangzi":           sourceLZ,
+	"ff":                sourceFF,
+	"feifan":            sourceFF,
+	"wj":                sourceWJ,
+	"wuji":              sourceWJ,
+	"bf":                sourceBF,
+	"baofeng":           sourceBF,
+	"hn":                sourceHN,
+	"hongniu":           sourceHN,
+	"sd":                sourceSD,
+	"shandian":          sourceSD,
+	"bd":                sourceBD,
+	"baidu":             sourceBD,
+	"badu":              sourceBD,
+	"xl":                sourceXL,
+	"xunlei":            sourceXL,
+	"yqk":               sourceYQK,
+	"yiqikan":           sourceYQK,
+	"4kvm":              source4KVM,
+	"4kvm.net":          source4KVM,
+}
+
+const accountLegacySource = ""

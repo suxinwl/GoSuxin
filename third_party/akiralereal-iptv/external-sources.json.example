@@ -1,0 +1,44 @@
+{
+  "enabled": true,
+  "includeInPlaylists": true,
+  "updateOnStartup": true,
+  "sources": [
+    {
+      "name": "示例订阅源",
+      "group": "未分组",
+      "enabled": true,
+      "mode": "subscription",
+      "m3u8Url": "",
+      "webUrl": "",
+      "subscriptionUrl": "https://example.com/playlist.m3u",
+      "parsedChannels": null,
+      "autoRefresh": true,
+      "refreshInterval": 1440,
+      "updateOnStartup": true,
+      "lastUpdated": null
+    },
+    {
+      "name": "示例频道",
+      "group": "体育",
+      "webUrl": "https://example.com/channel.html",
+      "m3u8Url": "",
+      "enabled": true,
+      "autoRefresh": true,
+      "refreshInterval": 60,
+      "updateOnStartup": true,
+      "extractOptions": {
+        "waitTime": 5000,
+        "headless": true
+      },
+      "lastUpdated": null
+    }
+  ],
+  "lastGlobalUpdate": null,
+  "_comments": {
+    "内置订阅源说明": "内置的「精选频道」订阅由程序启动时自动播种，无需（也不要）手工写进本文件",
+    "updateOnStartup": "重启时是否更新（全局控制平台抓取源，单个控制外部源，默认true）",
+    "autoRefresh": "是否自动刷新该源（默认true）",
+    "refreshInterval": "自动刷新间隔（分钟，默认60）",
+    "mode": "源模式：direct(直连) / fetch(抓取) / subscription(订阅m3u播放列表)"
+  }
+}

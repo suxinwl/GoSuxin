@@ -15,7 +15,8 @@ export default {
   'settings.navbar.alerts': 'alerts',
   'settings.menu': 'Menu',
   'settings.topMenu': 'Top Menu',
-  'settings.tabBar': 'Tab Bar',
+  'settings.tabBar': 'Tab display',
+  'settings.tabMode': 'Tab style',
   'settings.menuAccordion': 'Menu Accordion',
   'settings.footer': 'Footer',
   'settings.breadcrumb': 'Breadcrumb',
@@ -30,4 +31,13 @@ export default {
   'settings.saveSetting.message':'Save setting succeeded',
   'settings.resetSetting.message':'Reset default succeeded',
   'settings.sysTheme': 'System theme',
+  'settings.page.title': 'UI Display',
+  'settings.layout.left': 'Default Layout',
+  'settings.layout.mix': 'Mixed Layout',
+  'settings.layout.top': 'Top Layout',
+  'settings.layout.columns': 'Dual Column Layout',
+  'settings.tab.googlecard': 'Semicircular Corner',
+  'settings.tab.card': 'Card',
+  'settings.tab.gutter': 'Card with Gutter',
+  'settings.tab.rounded': 'Rounded Corner'
 };

@@ -7,7 +7,7 @@
             <a-tag v-if="ConfData?.pluginident" >
               标识： {{ConfData?.pluginident}}
             </a-tag>
-            <span class="tig" >配置文件位置：resource/config/{{ConfData?.name}}.yaml</span>
+            <span class="tig" >配置文件位置：manifest/config/code/{{ConfData?.name}}.yaml</span>
             <a-tooltip content="配置字段命名说明：_txt结尾是多行文本，_read结尾是只读，_switch结尾开关,#注释加 &des 是字段说明。" position="top" mini>
               <icon-question-circle-fill  class="configdes"/>
             </a-tooltip>

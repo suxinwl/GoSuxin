@@ -5,6 +5,8 @@
       <form-wrapper
         :type="option.type || 'switch'"
         :name="option.key"
+        :selectList="option.selectList"
+        :disablSelect="option.disablSelect"
         :default-value="option.defaultVal"
         @input-change="handleChange"
       />
@@ -16,12 +18,15 @@
   import { PropType } from 'vue';
   import { useAppStore } from '@/store';
   import FormWrapper from './form-wrapper.vue';
+  import type { SelectOptionData } from '@arco-design/web-vue';
 
   interface OptionsProps {
     name: string;
     key: string;
     type?: string;
     defaultVal?: boolean | string | number;
+    selectList?: SelectOptionData[];
+    disablSelect?: boolean;
   }
   defineProps({
     title: {

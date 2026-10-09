@@ -201,10 +201,11 @@ func (s *sAdminsystem) OperationLog(r *ghttp.Request) {
 		"address":      address,
 		"des":          des_str,
 		"status":       r.Response.Status,
-		"req_headers":  r.Request.Header,
+		"req_headers":  redactedLogHeaders(r.Request.Header),
 		"req_body":     dataMap,
 		"resp_body":    r.GetHandlerResponse(),
-		"resp_headers": r.Response.Header(),
+		"resp_headers": redactedLogHeaders(r.Response.Header()),
+		"latency":      0,
 	}
 	dao.OperationLog.Ctx(ctx).Insert(savedata)
 }

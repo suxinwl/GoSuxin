@@ -1,17 +1,15 @@
 import { defineStore } from 'pinia';
 import type { RouteRecordNormalized } from 'vue-router';
 import { generate, getRgbStr } from '@arco-design/color'
-import defaultSettings from '@/config/settings.json';
+import { restoreSettings } from './settings';
 import { getMenuList } from '@/api/user';
 import { AppState } from './types';
 import { cloneDeep } from 'lodash-es';
 import {Notification} from '@arco-design/web-vue';
 import type { AppRouteRecordRaw } from '/@/router/types';
 import { transformObjToRoute } from '/@/router/helper/routeHelper';
-//获取本地保存配置
-const settingsval=localStorage.getItem("settingsval");
 const useAppStore = defineStore('app', {
-  state: (): AppState => settingsval?({...JSON.parse(settingsval)}):({ ...defaultSettings }),
+  state: (): AppState => restoreSettings(localStorage.getItem('settingsval')),
   getters: {
     appCurrentSetting(state: AppState): AppState {
       return { ...state };

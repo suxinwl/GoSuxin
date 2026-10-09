@@ -53,14 +53,7 @@ func (s *sAdmininstall) Save(ctx context.Context, req *install.SaveReq) (res *gf
 		return gf.Failed().SetMsg("项目已安装，禁止重复安装")
 	}
 	//1.修改数据库配置
-	err := gf.UpConfigFild("/manifest/config/config.yaml", gf.Map{
-		"host":   req.FormDB["host"],
-		"port":   req.FormDB["port"],
-		"user":   req.FormDB["user"],
-		"pass":   req.FormDB["pass"],
-		"name":   req.FormDB["name"],
-		"prefix": req.FormDB["prefix"],
-	}, "    ")
+	err := writeDatabaseConfig("manifest/config/config.yaml", req.FormDB)
 	if err != nil {
 		res = gf.Failed().SetMsg("更新数据库配置失败！").SetData(err.Error())
 		return
@@ -180,7 +173,7 @@ func (s *sAdmininstall) Save(ctx context.Context, req *install.SaveReq) (res *gf
 	if ferr == nil {
 		defer file.Close()
 	}
-	res = gf.Success().SetMsg("执行安装操作成功").SetData(path)
+	res = gf.Success().SetMsg("安装成功，请重启后端服务后登录").SetData(path)
 	return
 }
 

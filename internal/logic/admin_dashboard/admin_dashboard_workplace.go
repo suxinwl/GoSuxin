@@ -10,6 +10,7 @@ import (
 	"context"
 	"github.com/suxinwl/GoSuxin/api/admin/dashboard"
 	"github.com/suxinwl/GoSuxin/internal/dao"
+	"github.com/suxinwl/GoSuxin/internal/plugins"
 	"github.com/suxinwl/GoSuxin/internal/service"
 	"github.com/suxinwl/GoSuxin/utility/gf"
 )
@@ -33,7 +34,13 @@ func (s *sAdminDashboard) GetQuick(ctx context.Context, req *dashboard.GetQuickR
 		res = gf.Failed().SetMsg("获取快捷操作数据失败").SetData(err)
 		return
 	}
-	res = gf.Success().SetMsg("获取管理后台菜单").SetData(list)
+	visible := list[:0]
+	for _, item := range list {
+		if plugins.EntryEnabled(item["path_url"].String()) {
+			visible = append(visible, item)
+		}
+	}
+	res = gf.Success().SetMsg("获取管理后台菜单").SetData(visible)
 	return
 }
 

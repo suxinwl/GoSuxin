@@ -27,6 +27,9 @@ func Auth(r *ghttp.Request) {
 
 // 检查接口权限
 func checkAuth(r *ghttp.Request) bool {
+	if plugin, ok := runtimePluginName(r.URL.Path); ok {
+		return checkRuntimePluginAuth(r, plugin)
+	}
 	uid := r.Context().Value("uid")
 	ctx := r.Context()
 	role_id, acerr := dao.AuthRoleAccess.Ctx(ctx).Where("uid", uid).Array("role_id")

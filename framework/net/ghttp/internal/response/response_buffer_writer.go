@@ -78,11 +78,12 @@ func (w *BufferWriter) Flush() {
 		return
 	}
 
-	if w.Status != 0 && !w.IsHeaderWrote() {
+	headerWasWritten := w.IsHeaderWrote()
+	if w.Status != 0 && !headerWasWritten {
 		w.Writer.WriteHeader(w.Status)
 	}
 	// Default status text output.
-	if w.Status != http.StatusOK && w.buffer.Len() == 0 && w.BytesWritten() == 0 {
+	if !headerWasWritten && w.Status != http.StatusOK && w.buffer.Len() == 0 && w.BytesWritten() == 0 {
 		w.buffer.WriteString(http.StatusText(w.Status))
 	}
 	if w.buffer.Len() > 0 {

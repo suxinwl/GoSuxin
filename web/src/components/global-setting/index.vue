@@ -15,6 +15,12 @@
     @cancel="cancel"
   >
     <template #title> {{ $t('settings.title') }} </template>
+    <a-row v-if="settingOpen" :gutter="[8, 8]">
+      <a-col v-for="item in LAYOUT_OPTIONS" :key="item.value" :span="8">
+        <LayoutItem :mode="item.value" :name="item.label" @click="toggleLayout(item.value)" />
+      </a-col>
+    </a-row>
+    <a-divider v-if="settingOpen" orientation="center">{{ $t('settings.page.title') }}</a-divider>
     <Block :options="contentOpts" />
     <a-divider orientation="center">{{ $t('settings.sysTheme') }}</a-divider>
     <a-row justify="center">
@@ -42,27 +48,31 @@
   import Block from './block.vue';
   import defaultSettings from '@/config/settings.json';
   import { cloneDeep } from 'lodash-es';
+  import LayoutItem from './components/LayoutItem.vue'
+  import type { LayoutMode } from '@/store/modules/app/types';
 
+  const settingOpen = import.meta.env.VITE_APP_SETTING !== 'false';
   const emit = defineEmits(['cancel']);
   const appStore = useAppStore();
   const { t } = useI18n();
   const { copy } = useClipboard();
   const visible = computed(() => appStore.globalSettings);
   const contentOpts = computed(() => [
-    { name: 'settings.navbar', key: 'navbar', defaultVal: appStore.navbar },
-    {
-      name: 'settings.menu',
-      key: 'menu',
-      defaultVal: appStore.menu,
-    },
-    {
-      name: 'settings.topMenu',
-      key: 'topMenu',
-      defaultVal: appStore.topMenu,
-    },
+    // { name: 'settings.navbar', key: 'navbar', defaultVal: appStore.navbar },
+    // {
+    //   name: 'settings.menu',
+    //   key: 'menu',
+    //   defaultVal: appStore.menu,
+    // },
+    // {
+    //   name: 'settings.topMenu',
+    //   key: 'topMenu',
+    //   defaultVal: appStore.topMenu,
+    // },
     { name: 'settings.footer', key: 'footer', defaultVal: appStore.footer },
     { name: 'settings.breadcrumb', key: 'breadcrumb', defaultVal: appStore.breadcrumb },
     { name: 'settings.tabBar', key: 'tabBar', defaultVal: appStore.tabBar },
+    { name: 'settings.tabMode', key: 'tabMode', defaultVal: appStore.tabMode,type: 'select',selectList: tabModeList.value, disablSelect: !appStore.tabBar},
     { name: 'settings.menuDark', key: 'menuDark', defaultVal: appStore.menuDark },
     { name: 'settings.navBg', key: 'navBg', defaultVal: appStore.navBg },
     { name: 'settings.menuAccordion', key: 'menuAccordion', defaultVal: appStore.menuAccordion },
@@ -144,6 +154,29 @@
   '#722ED1',
   '#12D2AC',
 ]
+/** 布局选项 */
+const LAYOUT_OPTIONS = computed<{ label: string; value: LayoutMode }[]>(() => [
+  { label: t('settings.layout.left'), value: 'left' },//默认布局
+  // { label: t('settings.layout.mix'), value: 'mix' },//混合布局
+  { label: t('settings.layout.top'), value: 'top' },//顶部布局
+  { label: t('settings.layout.columns'), value: 'columns' },//双列布局
+])
+const tabModeList = computed(() => [
+  { label: t('settings.tab.googlecard'), value: 'googlecard' },
+  { label: t('settings.tab.card'), value: 'card' },
+  { label: t('settings.tab.gutter'), value: 'card-gutter' },
+  { label: t('settings.tab.rounded'), value: 'rounded' },
+])
+/** 切换布局 */
+const toggleLayout = (layout: LayoutMode) => {
+  appStore.updateSettings({
+    layout,
+    topMenu: layout === 'top',
+    navbar: true,
+    menu: true,
+    menuCollapse: false,
+  });
+}
 </script>
 
 <style scoped lang="less">

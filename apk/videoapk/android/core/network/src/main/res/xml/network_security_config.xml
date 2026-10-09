@@ -1,0 +1,6 @@
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false"><trust-anchors><certificates src="system" /></trust-anchors></base-config>
+    <domain-config cleartextTrafficPermitted="true"><domain includeSubdomains="false">localhost</domain><domain includeSubdomains="false">127.0.0.1</domain></domain-config>
+    <domain-config cleartextTrafficPermitted="false"><domain includeSubdomains="false">xq.suxinwl.com</domain><trust-anchors><certificates src="system" /><certificates src="@raw/isrg_root_x1" /><certificates src="@raw/site_ca" /></trust-anchors></domain-config>
+    <domain-config cleartextTrafficPermitted="false"><domain includeSubdomains="false">59.36.165.33</domain><trust-anchors><certificates src="system" /><certificates src="@raw/isrg_root_x1" /></trust-anchors></domain-config>
+</network-security-config>

@@ -132,7 +132,7 @@ func (c *sAdmindeveloper) AsyncVersion(ctx context.Context, req *developer.Async
 	}
 	gfversion, _ := gcfg.Instance("app").Get(ctx, "app.version") // 框架版本号
 	result, err := g.Client().ContentJson().Post(ctx, req.Baseurl+"/goflycode/version/asyncVersion", gf.Map{
-		"code_token": req.CodeToken, "version": gfversion, "from": "goframe"})
+		"code_token": req.CodeToken, "version": gfversion, "from": "check", "frame": 2})
 	if err != nil {
 		res = gf.Failed().SetMsg("请求Suxin社区失败").SetData(err)
 		return

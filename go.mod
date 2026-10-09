@@ -9,6 +9,7 @@ require (
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/mssola/user_agent v0.6.0
 	github.com/qiniu/go-sdk/v7 v7.25.4
+	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	github.com/spf13/viper v1.21.0
 	github.com/suxinwl/GoSuxin/framework v1.0.0
 	github.com/suxinwl/GoSuxin/framework/contrib/drivers/mysql v1.0.0

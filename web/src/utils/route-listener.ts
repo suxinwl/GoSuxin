@@ -9,11 +9,11 @@ const emitter = mitt();
 
 const key = Symbol('ROUTE_CHANGE');
 
-let latestRoute: RouteLocationNormalized;
+let latestRoute: RouteLocationNormalized | undefined;
 
 export function setRouteEmitter(to: RouteLocationNormalized) {
-  emitter.emit(key, to);
   latestRoute = to;
+  emitter.emit(key, to);
 }
 
 export function listenerRouteChange(
@@ -24,8 +24,10 @@ export function listenerRouteChange(
   if (immediate && latestRoute) {
     handler(latestRoute);
   }
+  return () => emitter.off(key, handler as Handler);
 }
 
 export function removeRouteListener() {
   emitter.off(key);
+  latestRoute = undefined;
 }

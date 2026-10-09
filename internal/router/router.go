@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/suxinwl/GoSuxin/internal/controller/admin"
 	"github.com/suxinwl/GoSuxin/internal/controller/common"
+	"github.com/suxinwl/GoSuxin/internal/controller/suxinvideo"
 	"github.com/suxinwl/GoSuxin/internal/extend/middleware"
 	"github.com/suxinwl/GoSuxin/utility/gf"
 	"strings"
@@ -37,6 +38,7 @@ func BindController(ctx context.Context, serve *ghttp.Server) {
 		common.R.BindController(ctx, group)
 		// 微信小程序
 		wxapp.R.BindController(ctx, group)
+		suxinvideo.R.BindController(ctx, group)
 	}) //append
 	//静态文件访问控制
 	serve.Group("/resource/uploads", func(group *ghttp.RouterGroup) {

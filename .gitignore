@@ -29,11 +29,44 @@ web/dist/
 web/.env.local
 web/.env.*.local
 resource/uploads/
+/storage/
+tools/poppler/
+web/goframepro/
+plugins/ebook/reader/node_modules/
+plugins/ebook/reader/dist/
 devsource/developer/install/install.lock
 *.exe
 *.log
 *.sql.bak
 go.work.sum
+manifest/codeinstall/state.json
+manifest/codeinstall/.state-*.tmp
+
+# Local business data, credentials and build artifacts
+/data/
+**/node_modules/
+**/__pycache__/
+*.pyc
+*.pid
+*.secret
+*.jks
+*.keystore
+*.p12
+**/.gradle/
+**/.kotlin/
+apk/**/build/
+apk/**/local.properties
+apk/**/signing.properties
+apk/**/keystore.properties
+apk/videoapk/xiaoqi-android-source.zip
+apk/videoapk/android/*.png
+apk/videoapk/android/*.xml
+apk/videoapk/android/*validation*.json
+apk/videoapk/android/*verification*.json
+apk/videoapk/android/*.safe.json
+apk/videoapk/android/releases.json
+/devsource/codemarket/runtime-release/
+/devsource/codemarket/release/*.zip
 
 # Upstream test fixture, not a runtime log
 !framework/os/gfile/testdata/readline/file.log

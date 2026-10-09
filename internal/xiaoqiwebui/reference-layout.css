@@ -1,0 +1,408 @@
+/* 小柒影视参考站布局层。加载在业务样式之后，保留现有 DOM 与 JS 契约。 */
+:root {
+  --ref-bg: #0d0f11;
+  --ref-panel: #171b20;
+  --ref-panel-soft: #1e232a;
+  --ref-border: rgba(255,255,255,.08);
+  --ref-text: #f7f7f8;
+  --ref-muted: #9ca3af;
+  --ref-pink: #ff4081;
+  --ref-max: 1440px;
+}
+
+body.theme-4kvm {
+  background: var(--ref-bg);
+  color: var(--ref-text);
+}
+
+/* The legacy dialog rules use the light application panel token. Keep account,
+   detail, settings and playback headers inside the reference dark surface. */
+body.theme-4kvm dialog .dialog-heading {
+  background: var(--bg-dark-800, var(--ref-panel));
+  color: var(--ref-text);
+  border-color: var(--ref-border);
+}
+body.theme-4kvm dialog .dialog-heading h2 { color: var(--ref-text); }
+
+body.theme-4kvm .workspace {
+  padding: 0 max(14px, calc((100vw - var(--ref-max)) / 2)) 42px;
+  overflow-x: hidden;
+  background: var(--ref-bg);
+}
+
+body.theme-4kvm .navbar-inner {
+  width: 100%;
+  max-width: var(--ref-max);
+  margin: 0 auto;
+  min-height: 64px;
+}
+
+body.theme-4kvm .navbar-logo.brand {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+body.theme-4kvm .navbar-logo.brand > span {
+  font-size: 1.2rem !important;
+  letter-spacing: .02em !important;
+}
+
+body.theme-4kvm .navbar-logo.brand > span:first-child {
+  font-size: 1.7rem !important;
+}
+
+body.theme-4kvm .nav-links-desktop {
+  display: flex;
+  gap: .25rem;
+}
+
+body.theme-4kvm .nav-item-4kvm {
+  min-height: 42px;
+  border-radius: 8px;
+  color: #cbd0d8;
+  transition: background .2s ease, color .2s ease;
+}
+
+body.theme-4kvm .nav-item-4kvm:hover,
+body.theme-4kvm .nav-item-4kvm.active {
+  color: #fff;
+  background: rgba(255,64,129,.12);
+}
+
+body.theme-4kvm .nav-item-4kvm.active::after { width: 55%; bottom: 2px; }
+
+body.theme-4kvm .category-tabs {
+  display: block;
+  max-width: var(--ref-max);
+  margin: 0 auto 18px;
+  border: 1px solid var(--ref-border);
+  border-radius: 10px;
+  background: rgba(23,27,32,.9);
+}
+
+body.theme-4kvm .category-tabs > div,
+body.theme-4kvm #category-tabs-4kvm { background: transparent !important; border: 0 !important; }
+body.theme-4kvm .category-tabs-inner { padding: 10px 12px !important; }
+body.theme-4kvm .category-tabs-inner > div { gap: 8px !important; }
+
+body.theme-4kvm .tab-pill {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ref-muted);
+  padding: 7px 17px;
+  min-height: 34px;
+  transition: all .2s ease;
+}
+body.theme-4kvm .tab-pill:hover { color: #fff; background: var(--ref-panel-soft); }
+body.theme-4kvm .tab-pill.active {
+  color: #fff;
+  background: var(--ref-pink);
+  border-color: var(--ref-pink);
+  box-shadow: 0 6px 18px rgba(255,64,129,.25);
+}
+
+body.theme-4kvm .library-toolbar {
+  max-width: var(--ref-max);
+  margin: 0 auto 18px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  gap: 12px;
+}
+body.theme-4kvm .library-search { max-width: 620px; }
+body.theme-4kvm .library-search .search-field {
+  min-height: 42px;
+  background: var(--ref-panel);
+  border: 1px solid var(--ref-border);
+  border-radius: 999px;
+}
+body.theme-4kvm .catalog-controls { gap: 7px; }
+body.theme-4kvm .catalog-select select,
+body.theme-4kvm .catalog-action {
+  min-height: 38px;
+  background: var(--ref-panel);
+  border: 1px solid var(--ref-border);
+  color: #d5d8dd;
+  border-radius: 8px;
+}
+
+body.theme-4kvm .reference-content-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 26px;
+  max-width: var(--ref-max);
+  margin: 0 auto;
+  align-items: start;
+}
+body.theme-4kvm .catalog-content { min-width: 0; }
+body.theme-4kvm .reference-content-grid.with-home-sidebar { grid-template-columns: minmax(0, 1fr) 300px; }
+body.theme-4kvm .catalog-heading {
+  padding: 0 0 12px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid var(--ref-border);
+}
+body.theme-4kvm .catalog-heading .library-view-switch button[aria-pressed=true] {
+  color: #fff;
+  background: rgba(255,64,129,.15);
+  border-radius: 6px;
+}
+
+body.theme-4kvm .cards {
+  grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+  gap: 24px 15px !important;
+  padding: 0 !important;
+}
+body.theme-4kvm .card { min-width: 0; }
+body.theme-4kvm .card .poster,
+body.theme-4kvm .card .movie-poster {
+  aspect-ratio: 2 / 3;
+  border-radius: 10px;
+  background: var(--ref-panel);
+}
+body.theme-4kvm .card .movie-card-title,
+body.theme-4kvm .card .kvm-card-title {
+  text-align: left;
+  margin-top: 9px;
+  color: #f5f5f6;
+  font-size: 14px;
+  font-weight: 600;
+}
+body.theme-4kvm .card .poster-badge,
+body.theme-4kvm .card .badge-4k { background: rgba(0,0,0,.72); box-shadow: none; }
+body.theme-4kvm .card:hover .poster { opacity: 1; }
+body.theme-4kvm .card:hover .movie-card-preview { transform: translateX(-50%) translateY(0) scale(1); }
+
+body.theme-4kvm #sidebarRankings4kvm { display: block; min-width: 0; }
+body.theme-4kvm #sidebarRankings4kvm:empty { display: none; }
+body.theme-4kvm .sidebar-rankings {
+  top: 84px;
+  padding: 18px !important;
+  border: 1px solid var(--ref-border);
+  border-radius: 12px;
+  background: var(--ref-panel) !important;
+}
+body.theme-4kvm .sidebar-rankings h2 { margin-bottom: 12px; font-size: 17px; }
+body.theme-4kvm .rank-item { gap: 10px; padding: 8px 5px; }
+
+@media (max-width: 1279px) {
+  body.theme-4kvm .reference-content-grid { grid-template-columns: minmax(0, 1fr); }
+  body.theme-4kvm #sidebarRankings4kvm { display: none !important; }
+  body.theme-4kvm .cards { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 900px) {
+  body.theme-4kvm .nav-links-desktop { display: none; }
+  body.theme-4kvm .cards { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  body.theme-4kvm .library-toolbar { display: block; }
+  body.theme-4kvm .catalog-controls { margin-top: 10px; overflow-x: auto; }
+}
+@media (max-width: 560px) {
+  body.theme-4kvm .workspace { padding-left: 10px; padding-right: 10px; }
+  body.theme-4kvm .cards { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px 10px !important; }
+  body.theme-4kvm .category-tabs { margin-bottom: 12px; }
+  body.theme-4kvm .category-tabs-inner { padding: 8px !important; }
+  body.theme-4kvm .tab-pill { padding: 6px 13px; }
+  body.theme-4kvm .nav-search-form { display: none; }
+}
+
+/* Standalone playback pages stay in the workspace document flow. */
+body.theme-4kvm .play-page {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  width: 100%;
+  max-width: var(--ref-max);
+  margin: 0 auto;
+  padding: 20px 0 48px;
+  overflow: visible;
+  background: transparent;
+}
+/* Reference playback topology: a wide player/detail column and a compact
+   information rail. This keeps the episode list beside the player instead of
+   leaving an empty full-width block between the controls and episodes. */
+body.theme-4kvm .play-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 384px);
+  grid-template-rows: auto auto;
+  gap: 24px;
+  align-items: start;
+}
+body.theme-4kvm .play-page > #playerPanel { grid-column: 1; grid-row: 1; min-width: 0; }
+body.theme-4kvm .play-page > #playSidebar { grid-column: 2; grid-row: 1 / span 2; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+body.theme-4kvm .play-page > #playExpandedDetail { grid-column: 1; grid-row: 2; min-width: 0; }
+body.theme-4kvm .play-page > #playSidebar > #detailPanel { margin: 0; }
+body.theme-4kvm .play-page > #playSidebar > #playRecommendations { margin: 0; padding: 0; border: 0; }
+body.theme-4kvm .play-page > #playSidebar > #playRecommendations .play-recommendation-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+body.theme-4kvm .play-page[hidden],
+body.theme-4kvm .play-page .detail-page[hidden] { display: none !important; }
+body.theme-4kvm .play-page .player-dialog {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+}
+body.theme-4kvm .play-page .player-viewport { height: auto; }
+body.theme-4kvm .play-page .player-heading {
+  position: static;
+  margin: 0 0 16px;
+  padding: 0 0 14px;
+  background: transparent;
+  border-bottom: 1px solid var(--ref-border);
+}
+body.theme-4kvm .play-page .player-heading > button { display: none; }
+body.theme-4kvm .play-page .player-layout {
+  display: block;
+  height: auto;
+  padding: 0;
+}
+body.theme-4kvm .play-page .player-screen { width: 100%; height: auto; }
+body.theme-4kvm .play-page .playback-stage {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 78dvh;
+  border-radius: 10px;
+  background: #000;
+}
+body.theme-4kvm .play-page #onlineVideo {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 78dvh;
+  aspect-ratio: 16 / 9;
+  border-radius: inherit;
+  object-fit: contain;
+}
+body.theme-4kvm .play-page .player-toolbar { display: flex; margin: 16px 0 10px; }
+body.theme-4kvm .play-page .playback-source-control,
+body.theme-4kvm .play-page .playback-feedback,
+body.theme-4kvm .play-page .playback-error-row,
+body.theme-4kvm .play-page .player-preferences { margin-left: 0; margin-right: 0; }
+body.theme-4kvm .play-page .detail-page {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 22px 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+  border: 0;
+}
+body.theme-4kvm .play-page .detail-page .dialog-heading { display: none; }
+body.theme-4kvm .play-page .detail-page .dialog-body { max-width: none; margin: 0; padding: 0; }
+body.theme-4kvm .play-page .detail-top { align-items: flex-start; gap: 20px; }
+body.theme-4kvm .play-page .detail-cover { width: 110px; aspect-ratio: 2 / 3; border-radius: 8px; }
+body.theme-4kvm .play-page .detail-cover img { object-fit: cover; }
+body.theme-4kvm .play-page .detail-meta,
+body.theme-4kvm .play-page .detail-sources { color: var(--ref-muted); margin-top: 10px; line-height: 1.8; }
+body.theme-4kvm .play-page .detail-actions { margin-top: 16px; }
+body.theme-4kvm .play-page #playSidebar > #playerEpisodesPanel {
+  position: static;
+  inset: auto;
+  display: flex !important;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  margin: 24px 0;
+  padding: 20px;
+  border: 1px solid var(--ref-border);
+  border-radius: 12px;
+  background: var(--ref-panel);
+  box-shadow: none;
+}
+body.theme-4kvm .play-page #playSidebar > #playerEpisodesPanel .player-episode-list {
+  grid-template-columns: repeat(auto-fill,minmax(86px,1fr));
+  max-height: 320px;
+}
+body.theme-4kvm .play-page #playSidebar > #playerEpisodesPanel #closeEpisodesBtn { display: none; }
+body.theme-4kvm .play-page .play-recommendations,
+body.theme-4kvm .play-page .play-expanded-detail {
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ref-border);
+}
+body.theme-4kvm .play-page .play-recommendations h2,
+body.theme-4kvm .play-page .play-expanded-detail h2 { margin-bottom: 18px; font-size: 21px; color: var(--ref-text); }
+.play-recommendation-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 18px; }
+.play-recommendation-card {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  text-align: left;
+  color: var(--ref-text);
+}
+.play-recommendation-cover {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
+  border-radius: 9px;
+  background: var(--ref-panel);
+  color: var(--ref-muted);
+  font-size: 28px;
+}
+.play-recommendation-cover img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .2s; }
+.play-recommendation-card:hover img { transform: scale(1.04); }
+.play-recommendation-card strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 10px; font-size: 14px; }
+body.theme-4kvm .play-page .detail-description { margin: 0 0 20px; color: var(--ref-muted); line-height: 1.9; }
+body.theme-4kvm .play-page .detail-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px 24px; padding: 18px; border-radius: 10px; background: var(--ref-panel); }
+body.theme-4kvm .play-page .detail-facts > div { min-width: 0; }
+body.theme-4kvm .play-page .detail-facts dt { color: var(--ref-muted); }
+body.theme-4kvm .play-page .detail-facts dd { margin: 4px 0 0; overflow-wrap: anywhere; }
+body.theme-4kvm .play-page .detail-secondary { margin-top: 20px; }
+@media (max-width: 900px) {
+  body.theme-4kvm .play-page { grid-template-columns: minmax(0, 1fr); }
+  body.theme-4kvm .play-page > #playerPanel,
+  body.theme-4kvm .play-page > #playSidebar,
+  body.theme-4kvm .play-page > #playExpandedDetail { grid-column: 1; grid-row: auto; }
+  body.theme-4kvm .play-page > #playSidebar { display: block; }
+  body.theme-4kvm .play-page > #playSidebar > #playerEpisodesPanel { margin-top: 18px; }
+  .play-recommendation-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px 12px; }
+  body.theme-4kvm .play-page .detail-facts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 700px) {
+  body.theme-4kvm .play-page { padding-top: 12px; }
+  body.theme-4kvm .play-page .playback-stage,
+  body.theme-4kvm .play-page #onlineVideo { aspect-ratio: 16 / 10; max-height: 62dvh; border-radius: 7px; }
+  body.theme-4kvm .play-page .player-dialog.mobile-player { height: auto; min-height: 0; overflow: visible; }
+  body.theme-4kvm .play-page .mobile-player .player-layout,
+  body.theme-4kvm .play-page .mobile-player .player-screen,
+  body.theme-4kvm .play-page .mobile-player .player-viewport { height: auto; }
+  body.theme-4kvm .play-page .mobile-player .player-toolbar { display: flex; }
+  body.theme-4kvm .play-page .mobile-player .mobile-player-caption { padding-top: 16px; }
+  body.theme-4kvm .play-page .mobile-player .mobile-player-caption h2,
+  body.theme-4kvm .play-page .mobile-player .mobile-episode-rail { display: none; }
+  body.theme-4kvm .play-page .detail-cover { width: 78px; }
+  body.theme-4kvm .play-page .detail-top { gap: 13px; }
+  body.theme-4kvm .play-page .detail-top h1 { font-size: 21px; }
+  body.theme-4kvm .play-page #playSidebar > #playerEpisodesPanel { padding: 14px; }
+  body.theme-4kvm .play-page #playSidebar > #playerEpisodesPanel .player-episode-list { grid-template-columns: repeat(auto-fill,minmax(60px,1fr)); }
+}
+
+/* A hidden route section must never be resurrected by a visual display rule. */
+body.theme-4kvm [hidden] { display: none !important; }
+body.theme-4kvm[data-page="play"] #libraryPage,
+body.theme-4kvm[data-page="play"] #sidebarRankings4kvm,
+body.theme-4kvm[data-page="play"] #heroBanner4kvm,
+body.theme-4kvm[data-page="play"] #categoryTabs4kvm { display: none !important; }

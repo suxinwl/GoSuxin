@@ -1,12 +1,14 @@
 <template>
   <div class="tab-bar-container">
-      <div class="tab-bar-box">
-        <a-tabs type="card-gutter" editable hide-content size="medium" :active-key="route.name" @tab-click="handleTabclick" @delete="handleDel">
+      <div class="tab-bar-box" :class="{'google-card':appStore.tabMode=='googlecard','df-card':appStore.tabMode!='googlecard'}">
+        <a-tabs :type="tabsType" editable hide-content size="medium" :active-key="route.name == null ? undefined : String(route.name)" @tab-click="handleTabclick" @delete="handleDel">
           <a-tab-pane v-for="(tag, index) in tagList" :key="tag.name" :closable="index>0">
             <template #title>    
               <tab-item  :index="index" :item-data="tag"/>
-              <svg class="tabs_chrome_left" height="7" width="7"><path data-v-bae60330="" d="M 0 7 A 7 7 0 0 0 7 0 L 7 7 Z"></path></svg>
-              <svg class="tabs_chrome_right" height="7" width="7"><path data-v-bae60330="" d="M 0 0 A 7 7 0 0 0 7 7 L 0 7 Z"></path></svg>
+              <template v-if="appStore.tabMode=='googlecard'">
+                <svg class="tabs_chrome_left" height="7" width="7"><path data-v-bae60330="" d="M 0 7 A 7 7 0 0 0 7 0 L 7 7 Z"></path></svg>
+                <svg class="tabs_chrome_right" height="7" width="7"><path data-v-bae60330="" d="M 0 0 A 7 7 0 0 0 7 7 L 0 7 Z"></path></svg>
+              </template>
             </template>
           </a-tab-pane>
           <template #extra>
@@ -39,7 +41,7 @@
   import type { TagProps } from '@/store/modules/tab-bar/types';
   import { useRouter, useRoute } from 'vue-router';
   import { DEFAULT_ROUTE_NAME } from '@/router/constants';
-  import {listenerRouteChange,removeRouteListener} from '@/utils/route-listener';
+  import { listenerRouteChange } from '@/utils/route-listener';
   import { useAppStore, useTabBarStore } from '@/store';
 
   import tabItem from './tab-item.vue';
@@ -47,20 +49,14 @@
   const router = useRouter();
   const appStore = useAppStore();
   const tabBarStore = useTabBarStore();
-  const affixRef = ref();
   const tagList = computed(() => {
     return tabBarStore.getTabList.filter((item, index, self) => index === self.findIndex(t => t.name === item.name));
   });
+  const tabsType = computed(() => (appStore.tabMode === 'googlecard' ? 'card-gutter' : appStore.tabMode));
   // const offsetTop = computed(() => {
   //   return appStore.navbar ? 50 : 0;
   // });
-  watch(
-    () => appStore.navbar,
-    () => {
-      affixRef.value.updatePosition();
-    }
-  );
-  listenerRouteChange((route: RouteLocationNormalized) => {
+  const stopRouteListener = listenerRouteChange((route: RouteLocationNormalized) => {
     if(route.name==DEFAULT_ROUTE_NAME)tabBarStore.updateTabHome(route);
     if (
       !route.meta.noAffix &&
@@ -115,19 +111,24 @@
     router.push({...data});
   };
   onUnmounted(() => {
-    removeRouteListener();
+    stopRouteListener();
   });
 </script>
 
 <style scoped lang="less">
 @tab-bar-bg: rgb(var(--arcoblue-1)); // 标签背景色
-:deep(.arco-tabs-nav-ink) {
+:deep(.google-card  .arco-tabs-nav-ink) {
    display: none;
 }
-:deep(.arco-tabs-nav::before) {
+:deep(.google-card  .arco-tabs-nav::before) {
    display: none;
 }
-:deep(.arco-tabs-nav-tab) {
+:deep(.tab-bar-box ){
+  .arco-icon-hover:hover::before{
+    background-color: var(--color-fill-3) !important;
+  }
+}
+:deep(.google-card .arco-tabs-nav-tab) {
   padding-left: 3px;
   .arco-tabs-tab {
     position: relative;
@@ -165,7 +166,6 @@
   .tabs_chrome_left,.tabs_chrome_right{
     display: none;
     position: absolute;
-    // fill: var(--color-fill-2);
     fill: @tab-bar-bg;
   }
   .tabs_chrome_left{
@@ -176,12 +176,9 @@
     right: -7px;
     bottom: 0px;
   }
-  .arco-icon-hover:hover::before{
-    background-color: var(--color-fill-3) !important;
-  }
 }
 //选中
-:deep(.arco-tabs-nav-type-card-gutter){
+:deep(.google-card .arco-tabs-nav-type-card-gutter){
   .arco-tabs-tab-active {
     background-color: rgb(var(--arcoblue-1));
     padding-bottom: 4px !important;
@@ -202,13 +199,27 @@
     }
   }
 }
+//选中
+:deep(.tab-bar-box .arco-tabs-tab-active){
+  .arco-tabs-tab-close-btn{
+      color: var(--color-text-2);
+  }
+  .arco-icon-hover:hover::before{
+    background-color: var(--color-fill-3) !important;
+  }
+}
+
+
 //导航框
 .tab-bar-container {
   .tab-bar-box{
-    padding: 5px 5px 0px 5px;
+    padding: 5px;
     margin-left: 1px;
     background-color: var(--color-bg-2);
     border-bottom: solid 1px  var(--color-fill-2);
+  }
+  .google-card{
+    padding: 5px 5px 0px 5px;
   }
 }
 </style>

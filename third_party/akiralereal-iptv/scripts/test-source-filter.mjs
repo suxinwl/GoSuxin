@@ -1,0 +1,411 @@
+#!/usr/bin/env node
+/**
+ * 按配置档过滤源 回归测试（issue #29/#68）
+ *
+ * 不变量：
+ *  1) ensureSourceIds —— 外部源稳定 id：缺则补、已有保留、彼此唯一、幂等。
+ *  2) dedupeAllChannels —— 组内 name+地址 去重保留第一个；重复命中时把归属并入
+ *     保留者的 sourceIds 并集（多源提供的同一频道，禁用其一不误删）。
+ *  3) applyConfig.disabledSources —— 黑名单语义：频道**所有**来源都被禁才隐藏；
+ *     部分来源可用则保留；旧数据（无 sourceIds）不过滤；空黑名单不过滤。
+ *
+ * 运行： node scripts/test-source-filter.mjs   （或 npm test）
+ */
+import assert from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { BUILT_IN_SUBSCRIPTIONS, ExternalSourceManager, ensureSourceIds, inheritExistingSourceIds } from '../utils/externalSources.js'
+import {
+  consolidateLocalEducationChannels,
+  consolidateLocalKidsChannels,
+  consolidateLocalSportsChannels,
+  dedupeAllChannels,
+  normalizeContentGroupNames,
+  primarySourceId,
+} from '../utils/channelMerger.js'
+import { applyConfig } from '../utils/playlistConfig.js'
+
+for (const k of ['log', 'info', 'warn']) {
+  const orig = console[k]
+  console[k] = (...a) => { if (a.some(x => typeof x === 'string' && /应用播放列表配置|配置应用完成|频道去重/.test(x))) return; orig.apply(console, a) }
+}
+
+let passed = 0
+const check = (name, fn) => { fn(); passed++; console.log(`  ✅ ${name}`) }
+
+console.log('按配置档过滤源 回归测试 (issue #29/#68)')
+
+// 1) ensureSourceIds
+check('ensureSourceIds：缺则补、已有保留、唯一、幂等', () => {
+  const cfg = { sources: [{ name: 'A' }, { name: 'B', id: 'keep-me' }, { name: 'C' }] }
+  assert.equal(ensureSourceIds(cfg), true)                    // 有补 → mutated
+  assert.equal(cfg.sources[1].id, 'keep-me')                  // 已有 id 不动
+  assert.ok(cfg.sources[0].id && cfg.sources[2].id)
+  assert.notEqual(cfg.sources[0].id, cfg.sources[2].id)       // 唯一
+  const snapshot = cfg.sources.map(s => s.id)
+  assert.equal(ensureSourceIds(cfg), false)                   // 幂等：第二次无变化
+  assert.deepEqual(cfg.sources.map(s => s.id), snapshot)
+  assert.equal(ensureSourceIds(null), false)                  // 异常输入不炸
+  assert.equal(ensureSourceIds({}), false)
+})
+
+// 2) dedupeAllChannels：去重 + 归属并集
+check('dedupeAllChannels：重复频道归属并入保留者 sourceIds', () => {
+  const groups = [{
+    name: '体育',
+    dataList: [
+      { name: 'CCTV5', pID: '123' },                                   // 咪咕（隐式 migu）
+      { name: 'CCTV5', url: 'http://a/1.m3u8', sourceId: 'ext:aa' },   // 外部A（地址不同 → 保留）
+      { name: 'CCTV5', url: 'http://a/1.m3u8', sourceId: 'ext:bb' },   // 外部B（与A完全同 → 去重并入）
+      { name: 'CCTV5', pID: '123' },                                   // 咪咕重复 → 去重
+    ]
+  }]
+  const removed = dedupeAllChannels(groups)
+  assert.equal(removed, 2)
+  assert.equal(groups[0].dataList.length, 2)
+  const extKept = groups[0].dataList.find(c => c.url)
+  assert.deepEqual(extKept.sourceIds, ['ext:aa', 'ext:bb'])   // 并集：A 保留、B 并入
+  const migu = groups[0].dataList.find(c => c.pID)
+  assert.equal(primarySourceId(migu), 'migu')                 // 咪咕隐式识别
+  assert.deepEqual(migu.sourceIds, ['migu'])                  // 同源重复归并为单元素集合（与写盘回退主来源等价）
+})
+
+check('纪实统一更名为文旅，并与已用新名的来源合并', () => {
+  const input = [
+    { name: '纪实', dataList: [{ name: '中华特产', sourceId: 'migu' }] },
+    { name: '文旅', dataList: [{ name: 'WildEarth', sourceId: 'ext:a' }] },
+    { name: '新闻', dataList: [{ name: '中国天气', sourceId: 'migu' }] },
+  ]
+  const before = JSON.stringify(input)
+  const output = normalizeContentGroupNames(input)
+  assert.deepEqual(output.map(group => group.name), ['文旅', '新闻'])
+  assert.deepEqual(output[0].dataList.map(channel => channel.name), ['中华特产', 'WildEarth'])
+  assert.equal(JSON.stringify(input), before, '不应修改输入分组')
+})
+
+check('地方少儿频道同时归入少儿组，地方组仍保留且同台优先官方源', () => {
+  const input = [
+    { name: '少儿', dataList: [
+      { name: '嘉佳卡通', pID: 'm1' },
+      { name: '优漫卡通频道', pID: 'm2' },
+      { name: '经典动画大集合', pID: 'm3' },
+      { name: '新动漫', pID: 'm4' },
+      { name: '海南广播电视总台少儿频道', pID: 'm5' },
+    ] },
+    { name: '广东', dataList: [
+      { name: '广东少儿', sourceId: 'xt:gdtv' },
+      { name: '嘉佳卡通', sourceId: 'xt:gdtv' },
+      { name: '广东新闻', sourceId: 'xt:gdtv' },
+      { name: '深圳少儿', sourceId: 'xt:sztv' },
+    ] },
+    { name: '江苏', dataList: [{ name: '优漫卡通', sourceId: 'xt:jstv' }] },
+    { name: '辽宁', dataList: [{ name: '新动漫', sourceId: 'xt:beidou' }] },
+    { name: '海南', dataList: [{ name: '海南少儿', sourceId: 'xt:hnntv' }] },
+    { name: '上海', dataList: [{ name: '哈哈炫动', sourceId: 'xt:kankanews' }] },
+    { name: '央视', dataList: [{ name: 'CCTV14少儿', sourceId: 'migu' }] },
+  ]
+  const before = JSON.stringify(input)
+  const output = consolidateLocalKidsChannels(input)
+  const kids = output.find(group => group.name === '少儿').dataList
+
+  assert.deepEqual(kids.map(channel => channel.name), [
+    '嘉佳卡通', '优漫卡通', '经典动画大集合', '新动漫', '海南少儿',
+    '广东少儿', '深圳少儿', '哈哈炫动',
+  ])
+  assert.equal(kids.find(channel => channel.name === '嘉佳卡通').sourceId, 'xt:gdtv')
+  assert.equal(kids.find(channel => channel.name === '优漫卡通').sourceId, 'xt:jstv')
+  assert.equal(kids.find(channel => channel.name === '新动漫').sourceId, 'xt:beidou')
+  assert.equal(kids.find(channel => channel.name === '海南少儿').sourceId, 'xt:hnntv')
+  assert.deepEqual(output.find(group => group.name === '广东').dataList.map(channel => channel.name), [
+    '广东少儿', '嘉佳卡通', '广东新闻', '深圳少儿',
+  ])
+  assert.equal(output.find(group => group.name === '央视').dataList[0].name, 'CCTV14少儿')
+  assert.equal(JSON.stringify(input), before, '不应修改输入分组')
+})
+
+check('原本没有少儿组时自动创建，并放在地方分组之前', () => {
+  const output = consolidateLocalKidsChannels([
+    { name: '新闻', dataList: [{ name: '国际新闻' }] },
+    { name: '浙江', dataList: [{ name: '浙江少儿', sourceId: 'xt:cztv' }] },
+  ])
+  assert.deepEqual(output.map(group => group.name), ['新闻', '少儿', '浙江'])
+  assert.deepEqual(output[1].dataList.map(channel => channel.name), ['浙江少儿'])
+  assert.deepEqual(output[2].dataList.map(channel => channel.name), ['浙江少儿'])
+})
+
+check('地方教育频道同时归入教育组，地方组仍保留且同台优先官方源', () => {
+  const input = [
+    { name: '教育', dataList: [
+      { name: '江苏教育', pID: 'm1' },
+      { name: '山东教育', pID: 'm2' },
+    ] },
+    { name: '纪实', dataList: [{ name: '南京教科频道', pID: 'm3' }] },
+    { name: '江苏', dataList: [
+      { name: '江苏教育', sourceId: 'xt:jstv' },
+      { name: '江苏新闻', sourceId: 'xt:jstv' },
+    ] },
+    { name: '湖北', dataList: [{ name: '湖北教育', sourceId: 'xt:hbtv' }] },
+    { name: '南京', dataList: [{ name: '南京教育科技', sourceId: 'xt:njtv' }] },
+    { name: '辽宁', dataList: [{ name: '辽宁教育青少', sourceId: 'xt:beidou' }] },
+    { name: '河北', dataList: [{ name: '河北少儿科教', sourceId: 'xt:hebtv' }] },
+    { name: '央视', dataList: [{ name: 'CCTV10科教', sourceId: 'migu' }] },
+  ]
+  const before = JSON.stringify(input)
+  const output = consolidateLocalEducationChannels(input)
+  const education = output.find(group => group.name === '教育').dataList
+
+  assert.deepEqual(education.map(channel => channel.name), [
+    '江苏教育', '山东教育', '湖北教育', '南京教育科技', '辽宁教育青少',
+  ])
+  assert.equal(education.find(channel => channel.name === '江苏教育').sourceId, 'xt:jstv')
+  assert.equal(education.find(channel => channel.name === '南京教育科技').sourceId, 'xt:njtv')
+  assert.equal(output.some(group => group.dataList.some(channel => channel.name === '南京教科频道')), false)
+  assert.deepEqual(output.find(group => group.name === '江苏').dataList.map(channel => channel.name), ['江苏教育', '江苏新闻'])
+  assert.equal(output.find(group => group.name === '河北').dataList[0].name, '河北少儿科教')
+  assert.equal(output.find(group => group.name === '央视').dataList[0].name, 'CCTV10科教')
+  assert.equal(JSON.stringify(input), before, '不应修改输入分组')
+})
+
+check('地方体育频道同时归入体育组，地方组仍保留且同台优先官方源', () => {
+  const input = [
+    { name: '体育', dataList: [
+      { name: 'CCTV5体育', pID: 'm1' },
+      { name: '武术世界', pID: 'm2' },
+      { name: '陕西体育休闲频道', pID: 'm3' },
+      { name: '纬来体育', sourceId: 'bi:vltv' },
+    ] },
+    { name: '上海', dataList: [
+      { name: '五星体育', sourceId: 'xt:kankanews' },
+      { name: '上海新闻', sourceId: 'xt:kankanews' },
+    ] },
+    { name: '江苏', dataList: [{ name: '江苏体育休闲', sourceId: 'xt:jstv' }] },
+    { name: '辽宁', dataList: [{ name: '辽宁体育休闲', sourceId: 'xt:beidou' }] },
+    { name: '广东', dataList: [{ name: '广东体育', sourceId: 'xt:gdtv' }] },
+    { name: '河北', dataList: [{ name: '河北文旅体育', sourceId: 'xt:hebtv' }] },
+    { name: '福建', dataList: [{ name: '福建文旅体育', sourceId: 'xt:fjtv' }] },
+    { name: '河南', dataList: [{ name: '武术世界', sourceId: 'xt:hntv' }] },
+    { name: '山东', dataList: [{ name: '山东体育休闲', sourceId: 'xt:iqilu' }] },
+    { name: '亚太', dataList: [{ name: '澳门体育', sourceId: 'ext:apac' }] },
+  ]
+  const before = JSON.stringify(input)
+  const output = consolidateLocalSportsChannels(input)
+  const sports = output.find(group => group.name === '体育').dataList
+
+  assert.deepEqual(sports.map(channel => channel.name), [
+    'CCTV5体育', '武术世界', '陕西体育休闲频道', '纬来体育',
+    '五星体育', '江苏体育休闲', '辽宁体育休闲', '广东体育',
+    '河北文旅体育', '福建文旅体育', '山东体育休闲',
+  ])
+  assert.equal(sports.find(channel => channel.name === '武术世界').sourceId, 'xt:hntv')
+  assert.deepEqual(output.find(group => group.name === '上海').dataList.map(channel => channel.name), [
+    '五星体育', '上海新闻',
+  ])
+  assert.equal(output.find(group => group.name === '河南').dataList[0].name, '武术世界')
+  assert.equal(output.find(group => group.name === '亚太').dataList[0].name, '澳门体育')
+  assert.equal(sports.some(channel => channel.name === '澳门体育'), false)
+  assert.equal(JSON.stringify(input), before, '不应修改输入分组')
+})
+
+check('体育组里外部订阅的频道排在地方官方体育频道之后，内置源与咪咕位置不变', () => {
+  const output = consolidateLocalSportsChannels([
+    { name: '体育', dataList: [
+      { name: 'CCTV5体育', pID: 'm1' },
+      { name: '纬来体育', sourceId: 'bi:vl-sports' },
+      { name: '纬来体育', sourceId: 'ext:iptv', source: 'external', builtInSubscription: true },
+      { name: 'World Poker Tour', sourceId: 'ext:iptv', source: 'external', builtInSubscription: true },
+      { name: 'UFC 24/7', sourceId: 'ext:iptv', builtInSubscription: true },
+    ] },
+    { name: '江苏', dataList: [{ name: '江苏体育休闲', sourceId: 'xt:jstv' }] },
+    { name: '上海', dataList: [{ name: '五星体育', sourceId: 'xt:kankanews' }] },
+  ])
+  assert.deepEqual(output.find(group => group.name === '体育').dataList.map(channel => `${channel.name}|${channel.sourceId || 'migu'}`), [
+    'CCTV5体育|migu', '纬来体育|bi:vl-sports',
+    '江苏体育休闲|xt:jstv', '五星体育|xt:kankanews',
+    '纬来体育|ext:iptv', 'World Poker Tour|ext:iptv', 'UFC 24/7|ext:iptv',
+  ])
+})
+
+// 用户自配线路（自建订阅、本地文件/粘贴、直连、「复制到分组」副本）不被地方官方同台线路替换或删除。
+// 精选订阅的频道由 getValidChannels 打 builtInSubscription，仍按原规则去重。
+const labels = (output, name) => (output.find(group => group.name === name)?.dataList || [])
+  .map(channel => `${channel.name}|${channel.sourceId || 'migu'}`)
+const userLine = (name, sourceId, url = `http://user.example/${encodeURIComponent(name)}`) =>
+  ({ name, url, sourceId, source: 'external' })
+const curatedLine = name =>
+  ({ name, url: `http://curated.example/${encodeURIComponent(name)}`, sourceId: 'ext:jx', source: 'external', builtInSubscription: true })
+
+check('少儿组里粘贴的同台组播线路紧跟官方线路保留，不再被顶掉（邮件反馈）', () => {
+  const rtp = (name, addr) => userLine(name, 'ext:runyuan', `http://192.168.1.1:4022/rtp/${addr}`)
+  const input = [
+    { name: '少儿', dataList: [
+      { name: '嘉佳卡通', pID: 'm1' },
+      { name: '优漫卡通频道', pID: 'm2' },
+      rtp('优漫卡通', '239.49.8.119:8000'),
+      rtp('动漫秀场', '239.49.8.43:8028'),
+      rtp('金鹰卡通', '239.49.8.33:8000'),
+      rtp('卡酷少儿', '239.49.0.148:8000'),
+      userLine('浙江少儿', 'ext:runyuan', 'http://ali-xwl.cztv.com/live/channel081080Plxw.m3u8'),
+    ] },
+    { name: '江苏', dataList: [{ name: '优漫卡通', sourceId: 'xt:jstv' }] },
+    { name: '湖南', dataList: [{ name: '金鹰卡通', sourceId: 'xt:mgtv' }] },
+    { name: '北京', dataList: [{ name: '卡酷少儿', sourceId: 'xt:beijing' }] },
+    { name: '浙江', dataList: [{ name: '浙江少儿', sourceId: 'xt:cztv' }] },
+  ]
+  const before = JSON.stringify(input)
+  const output = consolidateLocalKidsChannels(input)
+  const expected = [
+    '嘉佳卡通|migu',
+    '优漫卡通|xt:jstv', '优漫卡通|ext:runyuan',      // 咪咕「优漫卡通频道」被官方原地替换，用户线路紧随
+    '金鹰卡通|xt:mgtv', '金鹰卡通|ext:runyuan',
+    '卡酷少儿|xt:beijing', '卡酷少儿|ext:runyuan',
+    '浙江少儿|xt:cztv', '浙江少儿|ext:runyuan',
+    '动漫秀场|ext:runyuan',
+  ]
+  assert.deepEqual(labels(output, '少儿'), expected)
+  // 地址不同，组内去重不会再合掉任何一条
+  dedupeAllChannels(output)
+  assert.deepEqual(labels(output, '少儿'), expected)
+  assert.deepEqual(labels(output, '湖南'), ['金鹰卡通|xt:mgtv'])
+  assert.equal(JSON.stringify(input), before, '不应修改输入分组')
+})
+
+check('其它分组里的用户同台线路原地保留；咪咕、精选的同台条目照旧去重', () => {
+  const output = consolidateLocalSportsChannels([
+    { name: '体育', dataList: [
+      { name: 'CCTV5体育', pID: 'm1' },
+      { name: '五星体育', pID: 'm2' },
+      curatedLine('Red Bull TV'),
+      curatedLine('广东体育'),
+      userLine('五星体育频道', 'ext:big'),
+      userLine('广东体育', 'ext:big'),
+    ] },
+    { name: '文旅', dataList: [{ name: '广东体育', pID: 'm3' }, curatedLine('五星体育')] },
+    { name: 'IPTV组播', dataList: [userLine('五星体育', 'ext:mc'), userLine('CCTV1', 'ext:mc')] },
+    { name: '我的收藏', dataList: [userLine('广东体育', 'ext:copy')] },  // issue #37「复制到分组」副本
+    { name: '未分组', dataList: [userLine('五星体育', 'ext:ign')] },     // 勾了「忽略源自带分组」（#110）的源
+    { name: '上海', dataList: [{ name: '五星体育', sourceId: 'xt:kankanews' }] },
+    { name: '广东', dataList: [{ name: '广东体育', sourceId: 'xt:gdtv' }] },
+  ])
+  assert.deepEqual(labels(output, '体育'), [
+    'CCTV5体育|migu',
+    '五星体育|xt:kankanews', '五星体育频道|ext:big',
+    '广东体育|xt:gdtv', '广东体育|ext:big',       // 精选的广东体育丢掉；官方线路排在精选之前
+    'Red Bull TV|ext:jx',
+  ])
+  assert.equal(output.some(group => group.name === '文旅'), false, '咪咕、精选的同台条目删光后空组照旧消失')
+  assert.deepEqual(labels(output, 'IPTV组播'), ['五星体育|ext:mc', 'CCTV1|ext:mc'])
+  assert.deepEqual(labels(output, '我的收藏'), ['广东体育|ext:copy'])
+  assert.deepEqual(labels(output, '未分组'), ['五星体育|ext:ign'])
+})
+
+check('用户线路放在别的地方组里时，内容组仍以官方线路为代表', () => {
+  const output = consolidateLocalKidsChannels([
+    { name: '北京', dataList: [userLine('金鹰卡通', 'ext:mine')] },
+    { name: '湖南', dataList: [{ name: '金鹰卡通', sourceId: 'xt:mgtv' }] },
+  ])
+  assert.deepEqual(labels(output, '少儿'), ['金鹰卡通|xt:mgtv'])
+  assert.deepEqual(labels(output, '北京'), ['金鹰卡通|ext:mine'])
+})
+
+check('getValidChannels：只有内置「精选频道」订阅的频道带 builtInSubscription', () => {
+  const manager = Object.create(ExternalSourceManager.prototype)
+  manager.sources = { enabled: true, sources: [
+    { id: 'cur', enabled: true, mode: 'subscription', group: '未分组',
+      subscriptionUrl: BUILT_IN_SUBSCRIPTIONS[0].subscriptionUrl,
+      parsedChannels: [{ name: '五星体育', group: '体育', url: 'http://curated.example/wx' }] },
+    { id: 'mine', enabled: true, mode: 'subscription', group: '少儿', subscriptionUrl: '', localImport: true,
+      parsedChannels: [{ name: '优漫卡通', group: '', url: 'http://user.example/ym' }] },
+    { id: 'copy', enabled: true, name: '广东体育', group: '我的收藏', m3u8Url: 'http://user.example/gd' },
+  ] }
+  const flags = manager.getValidChannels()
+    .flatMap(group => group.dataList.map(channel => `${channel.sourceId}:${channel.builtInSubscription === true}`))
+  assert.deepEqual(flags, ['ext:cur:true', 'ext:mine:false', 'ext:copy:false'])
+})
+
+// 3) applyConfig disabledSources 语义
+const mk = (sourceIds) => sourceIds === undefined
+  ? { id: 'x1', name: 'X' }
+  : { id: 'x1', name: 'X', sourceIds }
+const shows = (disabledSources, ch) => applyConfig(
+  [{ name: 'G', channels: [{ ...ch, originalGroup: 'G' }] }],
+  { disabledSources }
+).some(g => g.channels.some(c => c.name === 'X'))
+
+check('applyConfig：唯一来源被禁 → 隐藏', () => {
+  assert.equal(shows(['ext:aa'], mk(['ext:aa'])), false)
+  assert.equal(shows(['migu'], mk(['migu'])), false)
+})
+check('applyConfig：多源频道只要有一个来源可用 → 保留', () => {
+  assert.equal(shows(['ext:aa'], mk(['ext:aa', 'migu'])), true)
+  assert.equal(shows(['ext:aa', 'migu'], mk(['ext:aa', 'migu'])), false)  // 全禁才隐藏
+})
+check('applyConfig：旧数据（无/空 sourceIds）不过滤', () => {
+  assert.equal(shows(['ext:aa'], mk(undefined)), true)
+  assert.equal(shows(['ext:aa'], mk([])), true)
+})
+check('applyConfig：空黑名单 / 缺省配置不过滤', () => {
+  assert.equal(shows([], mk(['ext:aa'])), true)
+  assert.equal(shows(undefined, mk(['ext:aa'])), true)
+})
+check('applyConfig：禁源优先于手动移动（被禁源的频道即使移动过也隐藏）', () => {
+  const groups = [{ name: 'G', channels: [{ id: 'x1', name: 'X', originalGroup: 'G', sourceIds: ['ext:aa'] }] }]
+  const out = applyConfig(groups, { disabledSources: ['ext:aa'], channelGroupMap: { 'G::x1': '我的最爱' } })
+  assert.equal(out.some(g => g.channels.some(c => c.name === 'X')), false)
+})
+
+// 4) 前端未回读旧副本整份保存 → 按「身份」继承已有 id，不漂移（saveSources 内部即此二连：先继承再发号）
+check('inheritExistingSourceIds：无 id 旧副本按身份继承现有 id（防档↔源绑定孤儿）', () => {
+  const current = { enabled: true, sources: [{ name: 'A源', subscriptionUrl: 'http://x/a.m3u', id: 'aaaa1111' }] }
+  const incoming = { enabled: true, sources: [
+    { name: 'A源', subscriptionUrl: 'http://x/a.m3u' },          // 同身份、无 id → 应继承 aaaa1111
+    { name: 'B源', subscriptionUrl: 'http://x/b.m3u' },          // 新源 → 由 ensureSourceIds 发新号
+  ] }
+  inheritExistingSourceIds(incoming, current)
+  assert.equal(incoming.sources[0].id, 'aaaa1111')               // 继承、不漂移
+  assert.equal(incoming.sources[1].id, undefined)
+  ensureSourceIds(incoming)
+  assert.ok(incoming.sources[1].id && incoming.sources[1].id !== 'aaaa1111')  // 新号且不撞
+  // 已带 id 的照原样：再次继承是幂等
+  inheritExistingSourceIds(incoming, current)
+  assert.equal(incoming.sources[0].id, 'aaaa1111')
+})
+
+// 5) 写盘属性 → 解析 → 过滤 → 输出剥离 全链路回环（子进程 + mdataDir 沙箱，正是揪出「逗号撞频道名解析」的用例）
+check('回环：source-ids 写盘→解析→按档过滤→播放器输出剥离', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'iptv-srcfilter-'))
+  try {
+    const script = `
+import { writeFileSync } from 'node:fs'
+import { dataPath } from './utils/paths.js'
+writeFileSync(dataPath('interface.txt'), [
+  '#EXTM3U',
+  '#EXTINF:-1 tvg-id="频道A" tvg-name="频道A" tvg-logo="" source-ids="ext:t1" group-title="回环组",频道A',
+  'http://x/1.m3u8',
+  '#EXTINF:-1 tvg-id="频道B" tvg-name="频道B" tvg-logo="" group-title="回环组",频道B',
+  'http://x/2.m3u8',
+  '#EXTINF:-1 tvg-id="频道C" tvg-name="频道C" tvg-logo="" source-ids="ext:t1;migu" group-title="回环组",频道C',
+  'http://x/3.m3u8',
+].join('\\n') + '\\n')
+const { parseInterfaceTxt, applyConfig } = await import('./utils/playlistConfig.js')
+const groups = parseInterfaceTxt()
+const g = groups.find(x => x.name === '回环组')
+const C = g.channels.find(c => c.name === '频道C')
+if (!C || JSON.stringify(C.sourceIds) !== JSON.stringify(['ext:t1','migu'])) throw new Error('多源解析失败(分隔符回归?)')
+const names = applyConfig(groups, { disabledSources: ['ext:t1'] }).flatMap(x => x.channels.map(c => c.name))
+if (names.includes('频道A') || !names.includes('频道B') || !names.includes('频道C')) throw new Error('过滤语义失败: ' + names)
+const { interfaceStr } = await import('./utils/appUtils.js')
+const body = String(interfaceStr('/m3u', { host: 'localhost:1905' }, '', '', 'default').content)
+if (body.includes('source-ids')) throw new Error('输出泄漏内部属性')
+console.log('ROUNDTRIP_OK')
+`
+    const out = execFileSync(process.execPath, ['--input-type=module', '-e', script],
+      { env: { ...process.env, mdataDir: dir }, cwd: process.cwd(), encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] })
+    assert.ok(out.includes('ROUNDTRIP_OK'), '子进程回环未通过')
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+console.log(`\n全部通过：${passed}/${passed} ✅`)

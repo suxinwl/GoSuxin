@@ -1,7 +1,10 @@
 import type { RouteRecordNormalized } from 'vue-router';
 import type { AppRouteRecordRaw } from '/@/router/types';
+export type LayoutMode = 'left' | 'top' | 'columns';
+export type TabMode = 'googlecard' | 'card' | 'card-gutter' | 'rounded';
 export interface AppState {
   theme: string;
+  layout: LayoutMode;
   colorWeak: boolean;
   navbar: boolean;
   menu: boolean;
@@ -18,6 +21,7 @@ export interface AppState {
   globalSettings: boolean;
   device: string;
   tabBar: boolean;
+  tabMode: TabMode;
   menuFromServer: boolean;
   menuAccordion: boolean;
   serverMenu: RouteRecordNormalized[];

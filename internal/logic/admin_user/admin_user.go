@@ -12,6 +12,8 @@ import (
 	"github.com/suxinwl/GoSuxin/internal/dao"
 	"github.com/suxinwl/GoSuxin/internal/extend/clogic"
 	"github.com/suxinwl/GoSuxin/internal/model/entity"
+	"github.com/suxinwl/GoSuxin/internal/plugins"
+	"github.com/suxinwl/GoSuxin/internal/runtimeplugin"
 	"github.com/suxinwl/GoSuxin/internal/service"
 	"github.com/suxinwl/GoSuxin/utility/auth"
 	"github.com/suxinwl/GoSuxin/utility/gf"
@@ -49,7 +51,7 @@ func (s *sAdminUser) Login(ctx context.Context, req *user.LoginReq) (res *gf.R) 
 				res = gf.Failed().SetMsg("账号被禁用了")
 				return
 			}
-			if time.Now().Before(data.LockTime.Time) {
+			if accountIsLocked(data.LockTime, time.Now()) {
 				res = gf.Failed().SetMsg("账户已被锁定，请稍后再试")
 				return
 			}
@@ -100,7 +102,7 @@ func (s *sAdminUser) Login(ctx context.Context, req *user.LoginReq) (res *gf.R) 
 				res = gf.Failed().SetMsg("账号被禁用了")
 				return
 			}
-			if time.Now().Before(data.LockTime.Time) {
+			if accountIsLocked(data.LockTime, time.Now()) {
 				res = gf.Failed().SetMsg("账户已被锁定，请稍后再试")
 				return
 			}
@@ -143,7 +145,7 @@ func (s *sAdminUser) Login(ctx context.Context, req *user.LoginReq) (res *gf.R) 
 				res = gf.Failed().SetMsg("账号被禁用了")
 				return
 			}
-			if time.Now().Before(data.LockTime.Time) {
+			if accountIsLocked(data.LockTime, time.Now()) {
 				res = gf.Failed().SetMsg("账户已被锁定，请稍后再试")
 				return
 			}
@@ -344,7 +346,7 @@ func (s *sAdminUser) GetMenu(ctx context.Context, req *user.GetMenuReq) (res *gf
 		res = gf.Failed().SetMsg("获取菜单权限错误").SetData(ruleerr)
 		return
 	}
-	rulemenu := GetMenuArray(ctx, nemu_list, 0, roles)
+	rulemenu := GetMenuArray(ctx, runtimeplugin.Default.FilterMenus(plugins.FilterMenus(nemu_list)), 0, roles)
 	res = gf.Success().SetMsg("获取管理后台菜单").SetData(rulemenu).SetExdata(roles)
 	return
 }
@@ -355,10 +357,14 @@ func GetMenuArray(ctx context.Context, pdata gdb.Result, parent_id int64, roles 
 	var one int64 = 1
 	for _, v := range pdata {
 		if v["pid"].Int64() == parent_id {
+			component := v["component"].String()
+			if component == "PLUGIN:ebook" {
+				component = "/album/" + v["routepath"].String() + "/index"
+			}
 			mid_item := map[string]interface{}{
 				"path":      v["routepath"],
 				"name":      v["routename"],
-				"component": v["component"],
+				"component": component,
 			}
 			children := GetMenuArray(ctx, pdata, v["id"].Int64(), roles)
 			if children != nil {
@@ -444,6 +450,14 @@ func GetMenuArray(ctx context.Context, pdata gdb.Result, parent_id int64, roles 
 				}
 			}
 			//赋值
+			if request := g.RequestFromCtx(ctx); request != nil && request.GetQuery("runtimeFrontend").String() != "1" {
+				for prefix, plugin := range map[string]string{"album/": "ebook", "suxinvideo/": "suxinvideo", "privatecode/": "privatecode", "analysis/": "analysis"} {
+					if strings.HasPrefix(strings.TrimPrefix(component, "/"), prefix) && runtimeplugin.Default.Has(plugin) {
+						mid_item["component"] = "systool/plugin/runtime"
+						meta["runtimePlugin"] = plugin
+					}
+				}
+			}
 			mid_item["meta"] = meta
 			returnList = append(returnList, mid_item)
 		}

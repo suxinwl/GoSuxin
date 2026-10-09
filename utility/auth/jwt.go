@@ -22,7 +22,7 @@ func createToken(claims CustomClaims) (string, error) {
 func JwtParseToken(tokenString string) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey.String()), nil
-	})
+	}, jwt.WithValidMethods([]string{"HS256"}))
 	if token == nil {
 		return nil, err
 	}
@@ -36,11 +36,11 @@ func JwtParseToken(tokenString string) (*CustomClaims, error) {
 func JwtOnlyParseToken(tokenString string) (*CustomClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey.String()), nil
-	})
+	}, jwt.WithValidMethods([]string{"HS256"}), jwt.WithoutClaimsValidation())
 	if token == nil {
 		return nil, err
 	}
-	if claims, ok := token.Claims.(*CustomClaims); ok {
+	if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {
 		return claims, nil
 	}
 	return nil, err

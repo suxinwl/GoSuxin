@@ -60,7 +60,7 @@ type DownCodeRes struct {
 // 安装插件
 type InstallCodeReq struct {
 	g.Meta `path:"developer/packinstall/installCode" tags:"installCode" method:"post" summary:"安装插件"`
-	Name   string `p:"name" v:"required#插件包名称不能为空" dc:"插件名称"`
+	Name   string `p:"name" v:"required|regex:^[A-Za-z0-9][A-Za-z0-9_-]*$#插件包名称不能为空#插件包名称格式无效" dc:"插件名称"`
 }
 type InstallCodeRes struct {
 	*gf.R
@@ -69,7 +69,7 @@ type InstallCodeRes struct {
 // 卸载插件
 type UninstallCodeReq struct {
 	g.Meta `path:"developer/packinstall/uninstallCode" tags:"uninstallCode" method:"post" summary:"卸载插件"`
-	Name   string `p:"name" v:"required#插件包名称不能为空" dc:"插件名称"`
+	Name   string `p:"name" v:"required|regex:^[A-Za-z0-9][A-Za-z0-9_-]*$#插件包名称不能为空#插件包名称格式无效" dc:"插件名称"`
 }
 type UninstallCodeRes struct {
 	*gf.R
@@ -86,7 +86,8 @@ type InstallLocalCodeRes struct {
 
 // 查找本地已经安装的包
 type GetInstallPackReq struct {
-	g.Meta `path:"developer/packinstall/getInstallPack" tags:"getInstallPack" method:"get" summary:"查找本地已经安装的包"`
+	g.Meta  `path:"developer/packinstall/getInstallPack" tags:"getInstallPack" method:"get" summary:"查找本地已经安装的包"`
+	Catalog bool `p:"catalog" dc:"返回本地插件目录及安装状态"`
 }
 type GetInstallPackRes struct {
 	*gf.R

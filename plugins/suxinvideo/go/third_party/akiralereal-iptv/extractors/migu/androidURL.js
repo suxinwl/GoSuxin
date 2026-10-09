@@ -1,0 +1,419 @@
+import { getStringMD5 } from "../../utils/EncryUtils.js";
+import { getddCalcuURL, getddCalcuURL720p } from "./ddCalcuURL.js";
+import { printDebug, printGreen, printRed, printYellow } from "../../utils/colorOut.js";
+import { fetchUrl } from "../../utils/net.js";
+import { delay } from "../../utils/fetchList.js";
+// 画质开关的默认来源。模块化之后它们由 migu 模块的 configSchema 提供、经 opts 传进来；
+// 这里保留 import 作为默认值，让根目录那个一次性脚本 fetchURLByAndroid720p.js
+// （直接调 getAndroidURL720p(pid)、不传 opts）继续可用，也便于回滚。
+import { enableH265, enableHDR } from "../../config.js";
+import fetch from 'node-fetch';
+
+/**
+ * @typedef {object} SaltSign
+ * @property {string} salt 盐值
+ * @property {string} sign 签名
+ */
+
+/**
+ * @param {string} md5 - md5字符串
+ * @returns {SaltSign} - 
+ */
+function getSaltAndSign(md5) {
+
+  const salt = 1230024
+  const suffix = "3ce941cc3cbc40528bfd1c64f9fdf6c0migu0123"
+  const sign = getStringMD5(md5 + suffix)
+  return {
+    salt: salt,
+    sign: sign
+  }
+}
+
+/**
+ * @param {string} userId - 用户ID
+ * @param {string} token - 用户token
+ * @param {string} pid - 节目ID
+ * @param {number} rateType - 清晰度
+ * @returns {} - 
+ */
+// 咪咕 playurl 接口请求失败的统一收敛（用户日志截图反馈）：
+// fetchUrl 在超时/网络不通/非 JSON 响应时返回 undefined，部分风控/限流响应则没有 body 字段——
+// 此前直接读 respData.rid / respData.body 会抛 "Cannot read properties of undefined" 刷日志。
+// 统一返回干净的失败结果：channel() 会把 message 展示出来并按 1 分钟短缓存自动重试。
+function miguFetchFail(respData) {
+  const message = (respData && (respData.message || respData.desc))
+    || "咪咕接口请求失败：网络超时或不可达（服务器挂代理、海外部署、DNS 异常最常见），请检查服务器到 miguvideo.com 的网络"
+  return { url: "", rateType: 0, content: { message, raw: respData } }
+}
+
+// playurl 各档位的文案，只用于日志。与 extractors/migu/index.js 的画质选项一致；
+// 咪咕回应里出现的档位以外的数字兜底按数字打印。
+const RATE_LABELS = { 1: '流畅', 2: '标清 540P', 3: '高清 720P', 4: '蓝光 1080P', 7: '原画', 8: '超清4K (投屏专享)', 9: '4K 臻享超高清' }
+function rateLabel(rt) { return RATE_LABELS[rt] || `档位 ${rt}` }
+
+// 把咪咕拒绝时的原话带进日志。此前拒绝一律打「该账号没有会员」，可用户明明有会员、
+// 只是档位不含所请求的画质 / 终端权益，被这句话带着去纠结账号本身（issue #117）。
+function serverHint(respData) {
+  const msg = respData?.message
+  return msg && msg !== 'SUCCESS' ? `（咪咕：${msg}）` : ''
+}
+
+/**
+ * 档位表压成一行给日志：「蓝光 1080P(4/55) / 超清4K (投屏专享)(8/221416 本端不可切)」。
+ * 带上 usageCode 与「本端可否切换」标记——下一次 4K 反馈只要贴这一行，就能对出咪咕到底
+ * 列了哪些档、哪一档只给电视端，不必再猜。
+ */
+function tierTable(list) {
+  return (Array.isArray(list) ? list : []).map(f => {
+    const flags = [f?.needAuth === true ? '需权益' : '', f?.currentTerminalCanSwitch === '0' ? '本端不可切' : ''].filter(Boolean).join(' ')
+    return `${f?.rateDesc || '?'}(${f?.rateType}/${f?.usageCode ?? '?'}${flags ? ' ' + flags : ''})`
+  }).join(' / ')
+}
+
+/**
+ * 大屏策略走通后，档位表里有没有比已拿到的更高的「投屏专享」4K 档。
+ *
+ * 咪咕 4K 赛事有两套编码：rateType 9「臻享 超高清」是手机端的（约 10M），电视端「咪视界」
+ * 同一场更高（网上实测投屏流约 18M、用户说咪视界约 30M）。手机 App 的「投屏」功能走的就是
+ * 电视端那条流——游客探 4K 场次时 ottMediaFiles 里列着 rateType 8「超清4K (投屏专享)」
+ * usageCode 221416，只给大屏权益。含电视端权益的账号按 rateType 9 带 ott 要到的仍是手机
+ * 编码，10M 就成了天花板（issue #117 用户开通四屏后实测）。所以成功回应里若列着投屏档，
+ * 再按它要一次。表里列着的优先；大屏表整张没给时见 blindCastTier。
+ *
+ * 必须同时带「投屏」字样和 4K 字样（或 rateType 8）：档位表是升序的，只按「投屏」匹配
+ * 会先撞上将来可能出现的「蓝光 (投屏)」之类的低档。多项命中取表末尾的那项。
+ */
+function castTier(respData) {
+  const got = parseInt(respData?.body?.urlInfo?.rateType)
+  const lists = [respData?.body?.ottMediaFiles, respData?.body?.mediaFiles].filter(Array.isArray)
+  for (const list of lists) {
+    const hits = list.filter(f => {
+      const rt = parseInt(f?.rateType)
+      const desc = String(f?.rateDesc || '')
+      return rt !== got && /投屏/.test(desc) && (rt === 8 || /4K|2160|超清/i.test(desc))
+    })
+    const hit = hits[hits.length - 1]
+    if (hit) return { rateType: parseInt(hit.rateType), rateDesc: hit.rateDesc || rateLabel(parseInt(hit.rateType)) }
+  }
+  return null
+}
+
+/**
+ * 大屏表整张没给时，要不要盲要一次投屏档。
+ *
+ * castTier 靠的档位表形状是游客不带 ott 探出来的，四屏账号带 ott 成功的回应未必带大屏表：
+ * issue #117 用户 10-02 那场（游客看得到投屏专享）首次取流一行黄字都没有，投屏档从没被
+ * 要过（据日志推断，手头没有四屏账号）。所以大屏表为空、而拿到的是原画 / 4K（只有赛事流
+ * 才有这两档）时，直接按 rateType 8 试一次，给不给由 castAccepted 把关。咪咕给了大屏表而
+ * 表里没有投屏档的，信表，不试；普通频道顶档是蓝光，也不试，免得四屏账号换一圈台多一倍请求。
+ */
+function blindCastTier(respData) {
+  const ott = respData?.body?.ottMediaFiles
+  if (Array.isArray(ott) && ott.length > 0) return null
+  const got = parseInt(respData?.body?.urlInfo?.rateType)
+  return got === 7 || got === 9 ? { rateType: 8, rateDesc: rateLabel(8), blind: true } : null
+}
+
+/**
+ * 投屏档那一次请求算不算拿到了。咪咕拿不到所请求档位时不一定拒绝：会以 SUCCESS 回一条
+ * 更低档的流（游客要 9 给 540P、解说流要 9 给原画 都是这样），没权益时也可能只给几分钟
+ * 试看。这两种都不能拿去顶掉第一次已经拿到的完整 4K——顶掉了会按 pid 缓存 3 小时，
+ * 用户体感就是「开了四屏反而更差」。
+ */
+function castAccepted(castResp, cast) {
+  const info = castResp?.body?.urlInfo
+  if (castResp?.rid != 'SUCCESS' || !info?.url) return { ok: false, why: serverHint(castResp) }
+  if (parseInt(info.rateType) !== cast.rateType) return { ok: false, why: `（咪咕实际给的是 ${info.rateDesc || rateLabel(parseInt(info.rateType))}）` }
+  if ((parseInt(info.trySeeDuration) || 0) > 0) return { ok: false, why: `（只给试看 ${parseInt(info.trySeeDuration)} 秒）` }
+  return { ok: true, why: '' }
+}
+
+async function getAndroidURL(userId, token, pid, rateType, opts = {}) {
+  const useHDR = opts.enableHDR ?? enableHDR
+  const useH265 = opts.enableH265 ?? enableH265
+  // 可注入的请求函数，只给回归测试用（scripts/test-migu-4k-fallback.mjs）
+  const doFetch = opts.fetchUrl ?? fetchUrl
+
+  if (rateType <= 1) {
+    return {
+      url: "",
+      rateType: 0,
+      content: null
+    }
+  }
+  // 获取url
+  const timestramp = Date.now()
+  const appVersion = "26000370"
+  let headers = {
+    AppVersion: 2600037000,
+    TerminalId: "android",
+    "X-UP-CLIENT-CHANNEL-ID": "2600037000-99000-200300220100002",
+  }
+  // cctv5和5+开启flv后不能回放
+  if (pid != "641886683" && pid != "641886773") {
+    headers["appCode"] = "miguvideo_default_android"
+  }
+
+  if (rateType != 2 && userId != "" && token != "") {
+    headers.UserId = userId
+    headers.UserToken = token
+  }
+  // console.log(headers)
+  const str = timestramp + pid + appVersion
+  const md5 = getStringMD5(str)
+  const result = getSaltAndSign(md5)
+
+  let enableHDRStr = ""
+  if (useHDR) {
+    enableHDRStr = "&4kvivid=true&2Kvivid=true&vivid=2"
+  }
+  let enableH265Str = ""
+  if (useH265) {
+    enableH265Str = "&h265N=true"
+  }
+  // 请求
+  const baseURL = "https://play.miguvideo.com/playurl/v1/play/playurl"
+  const requestPlayurl = async (rt, withOtt) => {
+    const params = "?sign=" + result.sign + "&rateType=" + rt
+      + "&contId=" + pid + "&timestamp=" + timestramp + "&salt=" + result.salt
+      + "&flvEnable=true&super4k=true" + (withOtt ? "&ott=true" : "") + enableH265Str + enableHDRStr
+    printDebug(`请求链接: ${baseURL + params}`)
+    const resp = await doFetch(baseURL + params, {
+      headers: headers
+    })
+    printDebug(resp)
+    return resp
+  }
+
+  // 4K 先带 ott=true 请求。ott 是「大屏 / 电视终端」取流策略，咪咕按大屏（四屏）权益判定；
+  // 实测游客带 ott 直接 409 连降级流都不给，不带 ott 则正常给 540P、且 mediaFiles 里就列着
+  // rateType 9「臻享 超高清」——手机策略本身就有 4K。足球通这类不含电视端的「三屏」会员在
+  // 大屏策略下被判 TIPS_NEED_MEMBER，此前这里直接降到蓝光，1080P 就成了他们的天花板
+  // （issue #117）。现在被拒后先原样按手机策略再要一次 4K，仍被拒才降级；含大屏权益的
+  // 账号第一次就成功，路径不变。
+  let respData = await requestPlayurl(rateType, rateType == 9)
+  if (!respData) return miguFetchFail(respData)
+
+  if (respData.rid == 'TIPS_NEED_MEMBER' && rateType == 9) {
+    printYellow(`4K 按大屏策略被拒${serverHint(respData)}，改按手机策略再要一次 4K`)
+    respData = await requestPlayurl(9, false)
+    if (!respData) return miguFetchFail(respData)
+  } else if (rateType == 9 && respData.rid == 'SUCCESS' && respData.body?.urlInfo?.url) {
+    // 大屏策略走通（含电视端权益的账号）。有大屏表、或者要去试投屏档时把两张表打出来——
+    // 再有「码率不对」的反馈，靠这一行就能对出咪咕列了哪些档、我们要了哪一档。
+    // 普通频道（CCTV1 之类）大屏表是空的、也没什么可要的，只进 debug，免得换一圈台刷一屏黄字。
+    const got = respData.body.urlInfo
+    const gotDesc = got.rateDesc || rateLabel(parseInt(got.rateType))
+    const ottTable = tierTable(respData.body.ottMediaFiles)
+    const tables = `大屏档位表：${ottTable || '（空）'}；手机档位表：${tierTable(respData.body.mediaFiles) || '（空）'}`
+    const cast = castTier(respData) || blindCastTier(respData)
+    if (ottTable || cast) printYellow(`4K 按大屏策略取到 ${gotDesc}；${tables}`)
+    else printDebug(`4K 按大屏策略取到 ${gotDesc}；${tables}`)
+    if (cast) {
+      printYellow(cast.blind
+        ? `咪咕没给大屏档位表，按 rateType ${cast.rateType}「${cast.rateDesc}」带大屏策略试要一次`
+        : `档位表里另有「${cast.rateDesc}」，按 rateType ${cast.rateType} 带大屏策略再要一次`)
+      const castResp = await requestPlayurl(cast.rateType, true)
+      const verdict = castAccepted(castResp, cast)
+      if (verdict.ok) {
+        respData = castResp
+      } else {
+        printYellow(`「${cast.rateDesc}」没拿到${verdict.why}，沿用 ${gotDesc}`)
+      }
+    }
+  }
+  if (respData.rid == 'TIPS_NEED_MEMBER') {
+    // 拒绝回应的 urlInfo.rateType 是咪咕愿意给的档位（同一字段在游客被拒时就是它降到的
+    // 540P）。它给到蓝光或更高就先要蓝光，否则直接高清；再被拒一次兜底到高清。
+    const offered = parseInt(respData.body?.urlInfo?.rateType)
+    const fallback = offered >= 4 ? 4 : 3
+    printYellow(`${rateLabel(rateType)} 超出账号权益${serverHint(respData)}，已降到 ${rateLabel(fallback)}`)
+    respData = await requestPlayurl(fallback, false)
+    if (!respData) return miguFetchFail(respData)
+    if (respData.rid == 'TIPS_NEED_MEMBER' && fallback != 3) {
+      printYellow(`${rateLabel(fallback)} 仍超出账号权益${serverHint(respData)}，已降到 ${rateLabel(3)}`)
+      respData = await requestPlayurl(3, false)
+    }
+  }
+  // console.log(respData)
+  if (!respData || !respData.body) return miguFetchFail(respData)
+  const url = respData.body.urlInfo?.url
+  // console.log(rateType)
+  // console.log(url)
+  if (!url) {
+    return {
+      url: "",
+      rateType: 0,
+      content: respData
+    }
+  }
+  pid = respData.body.content?.contId || pid
+
+  // 将URL加密
+  const resURL = getddCalcuURL(url, pid, "android", rateType, userId)
+
+  rateType = respData.body.urlInfo?.rateType
+  // console.log("清晰度" + rateType)
+  return {
+    url: resURL,
+    rateType: parseInt(rateType),
+    content: respData
+  }
+
+}
+
+
+/**
+ * 旧版高清画质
+ * @param {string} pid - 节目ID
+ * @returns {} - 
+ */
+async function getAndroidURL720p(pid, opts = {}) {
+  const useHDR = opts.enableHDR ?? enableHDR
+  const useH265 = opts.enableH265 ?? enableH265
+  // 获取url
+  const timestramp = Math.round(Date.now()).toString()
+  const appVersion = "2600034600"
+  const appVersionID = appVersion + "-99000-201600010010028"
+  let headers = {
+    AppVersion: `${appVersion}`,
+    TerminalId: "android",
+    "X-UP-CLIENT-CHANNEL-ID": `${appVersionID}`,
+  }
+  // cctv5和5+开启flv后不能回放
+  if (pid != "641886683" && pid != "641886773") {
+    headers["appCode"] = "miguvideo_default_android"
+  }
+  // console.log(headers)
+  const str = timestramp + pid + appVersion.substring(0, 8)
+  const md5 = getStringMD5(str)
+
+  const salt = String(Math.floor(Math.random() * 1000000)).padStart(6, '0') + '25'
+  const suffix = "2cac4f2c6c3346a5b34e085725ef7e33migu" + salt.substring(0, 4)
+  const sign = getStringMD5(md5 + suffix)
+
+  let rateType = 3
+  let enableHDRStr = ""
+  if (useHDR) {
+    enableHDRStr = "&4kvivid=true&2Kvivid=true&vivid=2"
+  }
+  let enableH265Str = ""
+  if (useH265) {
+    enableH265Str = "&h265N=true"
+  }
+  // 请求
+  const baseURL = "https://play.miguvideo.com/playurl/v1/play/playurl"
+  const params = "?sign=" + sign + "&rateType=" + rateType
+    + "&contId=" + pid + "&timestamp=" + timestramp + "&salt=" + salt
+    + "&flvEnable=true&super4k=true" + enableH265Str + enableHDRStr
+  printDebug(`请求链接: ${baseURL + params}`)
+  const respData = await fetchUrl(baseURL + params, {
+    headers: headers
+  })
+
+  printDebug(respData)
+  // console.dir(respData, { depth: null })
+  if (!respData || !respData.body) return miguFetchFail(respData)
+  const url = respData.body.urlInfo?.url
+  // console.log(rateType)
+  // console.log(url)
+  if (!url) {
+    return {
+      url: "",
+      rateType: 0,
+      content: respData
+    }
+  }
+
+  rateType = respData.body.urlInfo?.rateType
+  pid = respData.body.content?.contId || pid
+
+  // 将URL加密
+  const resURL = getddCalcuURL720p(url, pid)
+
+  return {
+    url: resURL,
+    rateType: parseInt(rateType),
+    content: respData
+  }
+
+}
+
+async function get302URL(resObj) {
+  try {
+    let z = 1
+    while (z <= 6) {
+      if (z >= 2) {
+        printYellow(`获取失败,正在第${z - 1}次重试`)
+      }
+      const controller = new AbortController()
+      let timedOut = false;
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort()
+        // 只在最后一次才打印红字
+        if (z === 6) {
+          printRed("请求超时（最终失败）")
+        } else {
+          printYellow("请求超时，准备重试")
+        }
+      }, 6000);
+      const obj = await fetch(`${resObj.url}`, {
+        method: "GET",
+        redirect: "manual",
+        signal: controller.signal
+      }).catch(err => {
+        clearTimeout(timeoutId);
+        if (!timedOut) {
+          console.log(err)
+        }
+      })
+      clearTimeout(timeoutId);
+      const location = obj?.headers?.get("Location")
+
+      if (location != "" && location != undefined && location != null) {
+        if (!location.startsWith("http://bofang")) {
+          return location
+        }
+      }
+      if (z != 6) {
+        await delay(150)
+      }
+      z++
+    }
+  } catch (error) {
+    console.log(error)
+  }
+  printRed(`获取失败,返回原链接`)
+  return ""
+}
+
+/**
+ * 取流成功后打一行摘要：拿到的档位、是否游客、是否只给了试看。
+ *
+ * 此前这里打「登录认证成功」，鉴权字段为 FAIL 时再打一行红字「认证失败 视频内容不完整
+ * 可能缺少相关VIP」。可那行红字在流已经正常下发时也会打——账号没订购该内容的产品但内容
+ * 本身允许播放、或者咪咕只给了几分钟试看——看着像出了错，其实什么都没坏；真正要紧的
+ * 「拿到哪一档、试看多少秒」反而不打，issue #117 排查时全靠播放器截图。现在：完整播放绿字，
+ * 只给试看黄字，红字只留给拿不到地址的情况（由调用方按 desc 报）。
+ *
+ * content 可能是 null——rateType <= 1 时 getAndroidURL 直接返回 {url:"", content:null}；
+ * 调用点在 try 之外，这里抛 TypeError 会让请求永远不 end，所以一律可选链。
+ */
+function printStreamInfo(resObj, { cached = false } = {}) {
+  const body = resObj?.content?.body
+  if (!resObj?.url || !body) return
+  const info = body.urlInfo || {}
+  const rate = info.rateDesc || rateLabel(parseInt(info.rateType))
+  const who = body.auth?.logined ? '' : '游客 · '
+  const trySee = parseInt(info.trySeeDuration) || 0
+  const head = `咪咕取流${cached ? '（缓存）' : ''}：${who}${rate}`
+  if (trySee > 0) {
+    printYellow(`${head} · 仅试看 ${trySee} 秒（账号没有这条内容的观看权益）`)
+  } else {
+    printGreen(head)
+  }
+}
+
+export { getAndroidURL, getAndroidURL720p, get302URL, printStreamInfo }

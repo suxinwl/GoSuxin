@@ -1,5 +1,6 @@
 {
   "theme": "light",
+  "layout": "left",
   "colorWeak": false,
   "navbar": true,
   "menu": true,
@@ -16,6 +17,7 @@
   "globalSettings": false,
   "device": "desktop",
   "tabBar": true,
+  "tabMode": "googlecard",
   "menuFromServer": true,
   "menuAccordion": false,
   "serverMenu": [],

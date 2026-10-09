@@ -11,6 +11,7 @@
     "report": "cross-env REPORT=true npm run build",
     "preview": "npm run build && vite preview --host",
     "type:check": "vue-tsc --noEmit --skipLibCheck",
+    "test:layout": "node --test tests/layout.test.cjs",
     "lint-staged": "npx lint-staged"
   },
   "lint-staged": {
@@ -20,7 +21,7 @@
   },
   "dependencies": {
     "@arco-design/color": "^0.4.0",
-    "@arco-design/web-vue": "^2.57.0",
+    "@arco-design/web-vue": "2.58.0",
     "@types/crypto-js": "^4.2.2",
     "@vueuse/core": "^10.5.0",
     "ace-builds": "^1.33.3",

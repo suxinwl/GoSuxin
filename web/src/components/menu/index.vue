@@ -1,8 +1,9 @@
 <script lang="tsx">
-  import { defineComponent, ref, h, compile, computed } from 'vue';
+  import { defineComponent, ref, h, compile, computed, watch, onUnmounted } from 'vue';
+  import type { PropType } from 'vue';
   import { useI18n } from 'vue-i18n';
   import { useRoute, useRouter, RouteRecordRaw } from 'vue-router';
-  import type { RouteMeta } from 'vue-router';
+  import type { RouteMeta, RouteLocationNormalized } from 'vue-router';
   import { useAppStore,useUserStore } from '@/store';
   import { listenerRouteChange } from '@/utils/route-listener';
   import { openWindow, regexUrl } from '@/utils';
@@ -10,12 +11,32 @@
   import {Icon} from '@/components/Icon';
   export default defineComponent({
     emit: ['collapse'],
-    setup() {
+    props: {
+      menuData: {
+        type: Array as PropType<RouteRecordRaw[]>,
+        default: undefined,
+      },
+      showCollapseButton: {
+        type: Boolean,
+        default: undefined,
+      },
+    },
+    setup(props) {
       const { t } = useI18n();
       const appStore = useAppStore();
+      const useUser = useUserStore();
       const router = useRouter();
       const route = useRoute();
       const { menuTree } = useMenuTree();
+      const displayMenuTree = computed(
+        () => props.menuData ?? menuTree.value
+      );
+      const shouldShowCollapseButton = computed(() => {
+        if (props.showCollapseButton !== undefined) {
+          return props.showCollapseButton;
+        }
+        return appStore.device !== 'mobile';
+      });
       const collapsed = computed({
         get() {
           if (appStore.device === 'desktop') return appStore.menuCollapse;
@@ -41,23 +62,30 @@
           selectedKey.value = [item.name as string];
           return;
         }else if (item.meta?.onlypage) {//独立页面-数据大屏
-          const href = router.resolve({ path: item.path })
-          var href_str=href.href+"?business_id="+useUserStore().id
-          if(!item.meta?.requiresAuth)href_str=href_str+"&rouid="+item.meta?.id
-          openWindow(href_str);
+          const href = router.resolve({
+            path: item.path,
+            query: {
+              tenant_id: useUser.id,
+              business_id: useUser.id,
+              ...(!item.meta?.requiresAuth ? { rouid: String(item.meta?.id || '') } : {}),
+            },
+          });
+          openWindow(href.href);
           selectedKey.value = [item.name as string];
           return;
         }
         // Eliminate external link side effects
-        const { hideInMenu, activeMenu } = item.meta as RouteMeta;
+        const { hideInMenu, activeMenu } = (item.meta || {}) as RouteMeta;
         if (route.name === item.name && !hideInMenu && !activeMenu) {
           selectedKey.value = [item.name as string];
           return;
         }
         // Trigger router change
-        router.push({
-          name: item.name,
-        });
+        if(item.name){
+          router.push({
+            name: item.name,
+          });
+        }
       };
       const findMenuOpenKeys = (target: string) => {
         const result: string[] = [];
@@ -74,13 +102,13 @@
             });
           }
         };
-        menuTree.value.forEach((el: RouteRecordRaw) => {
+        displayMenuTree.value.forEach((el: RouteRecordRaw) => {
           if (isFind) return; // Performance optimization
           backtrack(el, [el.name as string]);
         });
         return result;
       };
-      listenerRouteChange((newRoute) => {
+      const syncMenu = (newRoute: RouteLocationNormalized) => {
         const { requiresAuth, activeMenu, hideInMenu } = newRoute.meta;
         if (requiresAuth && (!hideInMenu || activeMenu)) {
           const menuOpenKeys = findMenuOpenKeys(
@@ -90,11 +118,13 @@
           const keySet = new Set([...menuOpenKeys, ...openKeys.value]);
           openKeys.value = [...keySet];
 
-          selectedKey.value = [
-            activeMenu || menuOpenKeys[menuOpenKeys.length - 1],
-          ];
+          const selected = activeMenu || menuOpenKeys[menuOpenKeys.length - 1];
+          selectedKey.value = selected ? [String(selected)] : [];
         }
-      }, true);
+      };
+      const stopRouteListener = listenerRouteChange(syncMenu, true);
+      onUnmounted(stopRouteListener);
+      watch(displayMenuTree, () => syncMenu(route), { immediate: true });
       const setCollapse = (val: boolean) => {
         if (appStore.device === 'desktop')
           appStore.updateSettings({ menuCollapse: val });
@@ -135,7 +165,7 @@
           }
           return nodes;
         }
-        return travel(menuTree.value);
+        return travel(displayMenuTree.value);
       };
 
       return () => (
@@ -143,12 +173,12 @@
           mode={topMenu.value ? 'horizontal' : 'vertical'}
           v-model:collapsed={collapsed.value}
           v-model:open-keys={openKeys.value}
-          show-collapse-button={appStore.device !== 'mobile'}
+          show-collapse-button={shouldShowCollapseButton.value}
           accordion={appStore.menuAccordion}
           auto-open={false}
           selected-keys={selectedKey.value}
           auto-open-selected={true}
-          level-indent={34}
+          level-indent={26}
           style="height: 100%;width:100%;"
           onCollapse={setCollapse}
         >
@@ -176,6 +206,9 @@
       &:not(.arco-icon-down) {
         font-size: 18px;
       }
+    }
+    .arco-menu-icon{
+      margin-right: 8px !important;
     }
   }
 </style>
